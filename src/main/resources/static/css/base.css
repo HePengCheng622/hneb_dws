@@ -1,0 +1,66 @@
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,dd,dl,dt,li,ol,ul,fieldset,form,label,input,textarea,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0}
+html,body{height:100%;}
+li{list-style-type:none}
+.pd20{padding: 20px;}
+.height100{height: 100%;}
+/*---------通用标题---------*/
+.title{font-size:22px;padding: 20px 0;}
+/*---------左边菜单CSS---------*/
+.dwsMenu{width: 180px;background: #324157;position: fixed;top: 0;bottom: 0;display: flex;display: -webkit-flex;flex-direction: column;-webkit-flex-direction: column;}
+.dwsMenu .logo{text-align:center;color: #fff;background: #20a0ff;padding: 10px 0 15px 0;}
+.dwsMenu .logo p{font-size:34px}
+.dwsMenu .logo span{font-size:20px;color: rgba(255,255,255,0.9);}
+.dwsMenu .el-menu{flex: 1;-webkit-flex: 1;overflow: hidden;margin: 10px 0;}
+.dwsMenu .el-menu:hover{overflow: auto;}
+.dwsMenu .el-menu::-webkit-scrollbar{width: 6px;} 
+.dwsMenu .el-menu::-webkit-scrollbar-track{border-radius: 0;background: transparent;}
+.dwsMenu .el-menu::-webkit-scrollbar-track:hover{background: rgba(255,255,255,0.3);}
+.dwsMenu .el-menu::-webkit-scrollbar-thumb{border-radius: 4px;background: rgba(255,255,255,0.5);} 
+.dwsMenu dl{height:50px;display: flex;justify-content: space-between;padding: 0 0 10px 10px;}
+.dwsMenu dl dt{width: 50px;height: 50px;border-radius: 50%;}
+.dwsMenu dl dt img{width: 100%;height: 100%;}
+.dwsMenu dl dd{color: #fff;padding-left: 10px;}
+.dwsMenu dl dd ul li{font-size:14px;color: rgba(255,255,255,0.4);cursor: pointer;margin-right: 10px;padding-top: 5px;float: left;}
+.dwsMenu dl dd ul li:hover{color: #84AEF9;}
+/*---------中间主体CSS---------*/
+.dwsMain{background:#f5f6fa;position: fixed;left: 180px;top: 0;bottom: 30px;right: 0;}
+.mainBox{padding: 20px;box-sizing: border-box;}
+/*---------底部版权CSS---------*/
+.copyright{font-size:14px;height:30px;line-height: 30px;background: #f5f6fa;color: #bfcbd9;text-align: center;position: fixed;left: 180px;right: 0;bottom: 0;}
+/*---------弹出窗口---------*/
+.popWin{background: rgba(0,0,0,0.5);position: fixed;top: 0;bottom: 0;left: 0;right: 0;display: flex;display: -webkit-flex;justify-content: center;-webkit-justify-content: center;align-items: center;-webkit-align-items: center;visibility:hidden;z-index: 9999;}
+.popWin .popWinBox{width: 500px;height: 400px;background: #fff;display: flex;display: -webkit-flex;flex-direction: column;-webkit-flex-direction: column;margin-top: -30px;transition: all .4s;-webkit-transition: all .4s}
+.popWin .popWinHeader{font-size:18px;color: #fff;padding:9px 15px;background: #409EFF;position: relative;}
+.popWin .popWinHeader .el-icon-close{position: absolute;top: 12px;right: 10px;cursor: pointer;}
+.popWin .popWinContent{flex: 1;-webkit-flex: 1;overflow: hidden}
+/*---------table表格---------*/
+.tableUi{width: 100%;border-collapse:collapse;font-size: 14px;}
+.tableUi thead tr{background: #eaeaea;color: #666;}
+.tableUi thead tr th{padding: 14px 0 14px 10px;border:solid 1px #e6ebf5;border-bottom: solid 1px #c7c7c7;text-align: left;}
+.tableUi tbody tr td{padding: 14px 0 14px 10px;color: #5a5e66;border:solid 1px #e6ebf5}
+/*---------tabs左右分栏---------*/
+.layoutUi{min-height:32px;position: relative;}
+.layoutUi .layoutUiRight{position: absolute;top: 0;right: 0;}
+/*---------修改element原生样式---------*/
+/*通用样式*/
+#app{height: 100%;}
+/*导航样式*/
+.el-menu{border-right:none !important;background-color:transparent !important}
+.el-menu li{font-size:16px}
+.el-menu-item{color: #878d99 !important;}
+.el-menu-item [class^=dwsicon-]{font-size:20px;margin-right: 10px;display: inline-block;}
+.el-menu-item.is-active{color: #409EFF !important;background-color: transparent !important;}
+/*table表格样式*/
+.el-table__header thead tr{background: #eaeaea;color: #666;}
+.el-table__header thead tr th{border-bottom: solid 1px #c7c7c7 !important;}
+.el-table__fixed-right-patch{background: #eaeaea !important;border-bottom: solid 1px #c7c7c7 !important;}/*解决table表格出现滚动条顶部有空白问题*/
+.el-table{border: none;border-top: solid 1px #dfe6ec;}
+.el-table:before{background: transparent;}
+.el-table:after{background: transparent;}
+/*分页样式*/
+.el-pagination{padding: 15px 0;text-align: right;}
+/*复合型输入框按钮样式*/
+.el-input-group__append button.btnStyle1{background-color: #409EFF !important;color: #fff !important;border-radius: initial !important;border:solid 1px #409EFF !important}
+/*解决input/select下拉选中值后会高出0.5PX高度问题*/
+/*.el-form-item .el-form-item__content{line-height: initial;}*/
+.el-select .el-input__inner,.el-input .el-input__inner{line-height: 40px;}

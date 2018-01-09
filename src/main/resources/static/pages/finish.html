@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<link rel="stylesheet" href="../css/base.css"/>
+	<link rel="stylesheet" href="../css/iconfont.css" />
+	<style type="text/css">
+		.chatWindow{width: 450px;height: 100%;background: #f4f6f8;border-left: solid 1px #d4d4d4;box-shadow: 1px 1px 15px rgba(0,0,0,0.5);overflow: hidden;position: absolute;right: 0;bottom: 0;display: flex;display: -webkit-flex;flex-direction: column;-webkit-flex-direction: column;}
+		.chatWindow .chatHead{height: 42px;line-height: 42px;background: #eee;position: relative;}
+		.chatWindow .chatHead h4{font-size:14px;font-weight:bold;padding-left: 20px;}
+		.chatWindow .chatHead .el-icon-close{width:42px;height:42px;font-size:12px;line-height: 42px;color: #999;text-align: center;cursor: pointer;position: absolute;top: 0;right: 0;}
+		.chatWindow ul{flex: 1;-webkit-flex: 1;padding: 15px 20px;overflow-y:auto ;overflow-x: hidden;}
+		.chatWindow ul li{position: relative;margin-bottom: 20px;padding-left: 60px;}
+		.chatWindow ul li .chatUser{position: absolute;left: 3px;}
+		.chatWindow ul li .chatUser img{width: 40px;height: 40px;border-radius: 50%;-webkit-border-radius: 50%;}
+		.chatWindow ul li .chatUser .chatInfo{font-size:12px;white-space:nowrap;color: #999;position: absolute;left: 60px;top: -2px;}
+		.chatWindow ul li .chatUser .chatInfo i{padding-left: 15px;font-style: normal;}
+		.chatWindow ul li .chatTxt{min-height: 22px;background: #e2e2e2;color: #333;line-height: 22px;font-size:12px;padding: 8px 15px;margin-top: 25px;display: inline-block;position: relative;border-radius: 5px;-webkit-border-radius: 5px;}
+		.chatWindow ul li .chatTxt img{max-width:280px;vertical-align: middle;margin: 7px 0;}
+		.chatWindow ul li .chatTxt:after{content: "";width: 0;height: 0;border-style: dashed;border-color: transparent;border-width: 10px;border-top-style: solid;border-top-color: #e2e2e2;position: absolute;left: -10px;top: 10px;}
+		.chatWindow ul li .chatVoice{width: 160px;cursor: pointer;}
+		.chatWindow ul li .chatVoice .chatVoiceImg{display:inline-block;}
+		.chatWindow ul li .chatVoice .chatVoiceImg img{width: 16px;margin: 0;vertical-align: sub;}
+		.chatWindow ul li .chatVoice em{font:normal 14px "微软雅黑";color: #666;position: absolute;bottom: 0;right: -28px;}
+		.chatWindow ul li .chatReport{padding-right: 70px;cursor: pointer;}
+		.chatWindow ul li .chatReport h4{line-height: 18px;}
+		.chatWindow ul li .chatReport span{height: 30px;font-size:30px;color: #fff;line-height: 30px;padding: 5px;background:#999;position: absolute;top: 50%;right: 15px;margin-top: -20px;}
+		.chatWindow ul li .chatReport p{color: #666;}
+		.chatWindow ul li.chatMine{padding-left: 0;padding-right: 60px;text-align: right;}
+		.chatWindow ul li.chatMine .chatUser{right: 3px;left: auto;}
+		.chatWindow ul li.chatMine .chatUser .chatInfo{left:auto;right: 60px;}
+		.chatWindow ul li.chatMine .chatUser .chatInfo i{padding-left: 0;padding-right: 15px;}
+		.chatWindow ul li.chatMine .chatTxt{background: #2b7db9;color: #fff;text-align: left;}
+		.chatWindow ul li.chatMine .chatTxt:after{border-top-color: #2b7db9;left:auto;right: -10px;}
+		.chatWindow ul li.chatMine .chatVoice{text-align: right;}
+		.chatWindow ul li.chatMine .chatVoice em{left: -28px;right: auto;}
+		.chatWindow ul li.chatMine .chatReport{padding-left: 70px;padding-right: 15px;}
+		.chatWindow ul li.chatMine .chatReport p{color: #eee;}
+		.chatWindow ul li.chatMine .chatReport span{background: #78c6ff;left: 15px;right: auto;}
+		.chatWindow .chatInput{padding:10px;border-top: solid 1px #eee;background: #fff;display: flex;display: -webkit-flex;}
+		.chatWindow .chatInput .el-icon-picture{font-size:24px;color: #999;display: inline-block;cursor: pointer;display: flex;display: -webkit-flex;flex-direction: column;-webkit-flex-direction: column;justify-content: center;-webkit-justify-content: center;}
+		.chatWindow .chatInput .el-textarea{margin: 0 10px;}
+		.chatWindow .chatInput button{padding: 8px 15px;}
+	</style>
+	<script src="../plugin/vue/vue.js"></script>
+	<script src="../plugin/element-ui/lib/index.js"></script>
+	<link rel="stylesheet" href="../plugin/element-ui/theme-chalk/index.css">
+</head>
+
+<body>
+<div id="app">
+	<div class="mainBox height100">
+		<div class="layoutUi">
+			<el-form :inline="true">
+				<el-form-item label="查询条件：">
+					<el-checkbox-group v-model="checkedList">
+						<el-checkbox label="1" checked>图文咨询</el-checkbox>
+						<el-checkbox label="2" checked>电话咨询</el-checkbox>
+						<el-checkbox label="5" checked>服务包</el-checkbox>
+						<el-checkbox label="6" checked>骨龄</el-checkbox>
+					</el-checkbox-group>
+				</el-form-item>
+				<el-form-item>
+					<el-date-picker v-model="dateRange" type="daterange" range-separator="到" :editable="false"
+									:picker-options="pickerOptions" placeholder="请选择任务时间范围"></el-date-picker>
+				</el-form-item>
+				<el-form-item>
+					<el-input v-model="form.name" placeholder="请填写提交人"></el-input>
+				</el-form-item>
+				<el-form-item>
+					<el-button type="primary" plain @click="query">查询</el-button>
+				</el-form-item>
+			</el-form>
+		</div>
+		<el-table :data="pageDTO.resultList" highlight-current-row :max-height="tableHeight" >
+			<el-table-column prop="orderType" :formatter="filterType"   label="提交类型" width="100"></el-table-column>
+			<el-table-column prop="buyerName" label="提交人" width="100"></el-table-column>
+			<el-table-column prop="orderTm" label="提交时间" width="190"></el-table-column>
+			<el-table-column :formatter="spellDetails" show-overflow-tooltip label="描述"></el-table-column>
+			<el-table-column prop="operation" label="操作" width="80">
+				<template scope="scope">
+					<el-button @click="handleClick(scope.row)" type="success" size="small">处理</el-button>
+				</template>
+			</el-table-column>
+		</el-table>
+		<el-pagination :current-page="form._pageNum" :page-sizes="[10,20, 50, 100]" :page-size="form._pageSize"
+					   @current-change="handleCurrentChange"
+					   @size-change="handleSizeChange"
+					   layout="total, sizes, prev, pager, next, jumper" :total="pageDTO.total">
+		</el-pagination>
+	</div>
+	<!--聊天窗口-->
+	<div class="chatWindow" v-show="showChat"  style="display: none">
+		<div class="chatHead">
+			<h4>图文咨询内容</h4>
+			<i class="el-icon-close" @click="showChat=!showChat"></i>
+		</div>
+		<ul>
+			<li v-for="(item,index) in chatData.messages" :class="item.belong=='me'?'chatMine':''" >
+				<div class="chatUser" v-if="item.type != 'illDesc'">
+					<img v-if="item.belong=='me'" :src="chatData.selfHeadImg">
+					<img v-if="item.belong=='other'" :src="chatData.otherHeadImg">
+					<div  v-if="item.belong=='me'" class="chatInfo">{{item.time|datefilter}}<i>&nbsp&nbsp&nbsp&nbsp{{chatData.selfNme}}</i></div>
+					<div  v-if="item.belong=='other'" class="chatInfo">{{chatData.otherNme}}<i>{{item.time|datefilter}}</i></div>
+				</div>
+				<!--文字类型-->
+				<div class="chatTxt" v-if="item.type=='1'">{{item.content}}</div>
+				<!--语音类型-->
+				<div class="chatTxt chatVoice" v-if="item.type=='2'" @click="fnPlayAudio(item.content);" >
+                        <span class="chatVoiceImg">
+                            <img v-if="item.belong=='me'" :value="item.belong" :name="item.content" src="http://sysdata.qiniu.hneb.net/hneb_wx_playVoiceMe.png" />
+                            <img v-if="item.belong=='other'" :value="item.belong" :name="item.content" src="http://sysdata.qiniu.hneb.net/hneb_wx_playVoice.png" />
+                        </span>
+					<em>{{fnGetAudioLenght(item.content)}}″</em>
+					<audio  class="ebfont eb-chatVoice"  @ended="fnChangeImg(item.content)" :src="item.content" :id="item.content" ></audio>
+				</div>
+				<!--图片类型-->
+				<div v-if="item.type=='4'" class="chatTxt" >
+					<img :src="item.content"/>
+				</div>
+				<!--报告类型-->
+				<div class="chatTxt chatReport" v-if="item.type=='6'" @click="openReport(item.report.url)">
+						<h4>{{item.report.nme}}</h4>
+						<p>{{item.report.tm}}</p>
+						<span class="dwsicon-url"></span>
+				</div>
+			</li>
+		</ul>
+	</div>
+</div>
+</body>
+
+<script src="../js/utils.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                showChat:false,// 是否显示聊天窗口
+                tableHeight: 0,//设置table最大高度值
+                dateRange: '',// 日期区间
+                checkedList: [],//被选中的值
+                sOldAudioId:"",//用来记录上一次的播放audioId
+                pageDTO: {// 分页显示的数据
+                    total: 0,// 总条数
+                    resultList: [{
+                        orderId: "",// 订单id
+                        orderTm: "",// 订单时间
+                        orderType: "",// 订单类型
+                        buyerName: "",// 购买人
+                        orderDetails: "",// 详情描述
+                    }
+                    ]
+                },
+                form: {// 表单数据
+                    name: '',// 查找人
+                    begin: '',// 开始时间
+                    end: '',// 结束时间
+                    type: '',// 查找类型
+                    _pageNum: 1,// 当前页数
+                    _pageSize: 10,// 当前页面条数
+                    _count: true// 是否需要统计总数
+                },
+                pickerOptions: {
+                    shortcuts: [{
+                        text: '最近一周',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }, {
+                        text: '最近一个月',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }, {
+                        text: '最近三个月',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }]
+                },
+				// chatWindow
+                chatData:{
+                    orderId: '',//订单号
+                    content:'xxx',//用户输入的内容
+                    otherNme: '',//聊天窗口title中对方的姓名
+                    otherId: '',//聊天中对方的id
+                    otherHeadImg: '',//对方的头像
+                    selfId: '',//聊天中当前登录人员id
+                    selfNme: '',//聊天中当前登录人员的nme
+                    selfHeadImg: '',//当前登录人员的头像
+                    messages: [
+                        {
+                            belong: '',//消息所有者：me自己，other他人
+                            type: '',//消息大类：illDesc病情描述，chatMsg对话消息
+                            headImg: '',//消息发送者头像url地址
+                            msgType: '',//消息类型 ，1文本消息4 图片消息6 附件消息
+                            content: '',//消息内容
+
+                            //患者留言，当type为illDesc时以下节点不为空 begin
+                            childNme: '',//患者姓名
+                            childSex: '',//患者性别
+                            childAge: '',//患者年龄
+                            illNme: '',//疾病名称
+                            illTm: '',//患病时间
+                            illDesc: '',//病情描述
+                            report: {//报告节点
+                                nme: '',//报告名字
+                                tm: '',//报告时间
+                                url: ''//报告url
+                            },
+                            img1: '',//留言图片
+                            img2: '',
+                            img3: ''
+                            //患者留言，当type为illDesc时以上节点不为空 end
+                        }
+                    ]
+                }
+            }
+        },
+        watch: {
+            checkedList: {
+                handler: function (val, oldVal) {this.form._count=true;},
+                deep: true
+            },
+            dateRange: {
+                handler: function (val, oldVal) {this.form._count=true;},
+                deep: true
+            },
+            'form.name':{
+                handler: function (val, oldVal) {this.form._count=true;},
+                deep: true
+            }
+        },
+        filters:{
+            datefilter:function(time) {
+                var time = new Date(parseInt(time));
+                return time.getFullYear()+"-"+(time.getMonth()+1)+"-"+time.getDate()+" "+time.getHours()+":"+time.getMinutes()+":"+time.getSeconds();
+            },
+        },
+        methods: {
+            handleSizeChange:function(val){
+                this.form._pageSize=val;
+                this.query();
+            },
+            handleCurrentChange:function(val){
+                this.form._pageNum=val;
+                this.query();
+            },
+            handleClick: function (row) {
+                var that = this;
+                // 显示聊天记录
+                this.showChat=!this.showChat;
+                // 获取聊天信息
+                utils.post("/chat/getChat",{orderId:row.orderId}).then(function(res){
+                    that.chatData=res.data;
+                    console.log(that.chatData);
+                });
+            },
+            dealParams: function () {
+                // 处理选择框
+                if(this.checkedList!=""){
+                    var type="";
+                    for(var i=0;i<this.checkedList.length;i++){
+                        if(i==this.checkedList.length-1){
+                            type=type+this.checkedList[i];
+                        }else{
+                            type=type+this.checkedList[i]+",";
+                        }
+                    }
+                    this.form.type=type;
+                }else{
+                    this.form.type="1,2,3,4,5,6,7,8,9";
+				}
+                // 处理时间
+                if(this.dateRange==""){
+                    var date = new Date();
+                    this.form.begin="1000-01-01";
+                    this.form.end=date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate();
+                }else{
+                    this.form.begin=this.dateRange[0];
+                    this.form.end=this.dateRange[1];
+                }
+                // 携带总数过去
+                this.form._total=this.pageDTO.total;
+
+                console.log(this.form);
+            },
+            query: function () {
+                // 处理数据
+                this.dealParams();
+                var that = this;
+                utils.post("/finish/query", this.form).then(function (res) {
+                    that.pageDTO = res.data;
+                    console.log(that.pageDTO);
+                    that.$message({
+                        message:res.msg,
+                        type:'success',
+                        duration:1000
+                    })
+                }, function (res) {
+                    that.$message({
+                        message:res.msg,
+                        type:'error',
+                        duration:1000
+                    })
+                });
+                this.form._count=false;// 每次请求完至为false
+            },
+            filterType: function (row,col,value) {
+                if(value=="1"){
+                    return "图文咨询"
+                }else if(value=="2"){
+                    return "电话咨询"
+                }else if(value=="5"){
+                    return "服务包"
+                }else{
+                    return "骨龄"
+                }
+            },
+            spellDetails:function(row){
+                var details = row.childName+'   '+(row.childSex=='F'?'女':'男')+'     '+row.birthday+'    '+row.illName+'     '+row.illTm+'   '+row.illDesc;
+                return details;
+            },
+            // 播放被点击的音频
+            fnPlayAudio:function(id){
+                var oImg = document.getElementsByName(id)[0];// 获取出播放时的img标签
+                var oAudio = document.getElementById(id);//获取当前被点击的语音
+                // 第一次点击为播放，第二次点击为暂停
+                if(oAudio.paused){
+                    if(oImg.getAttribute("value")=="me"){
+                        oImg.setAttribute("src","http://sysdata.qiniu.hneb.net/hneb_wx_playVoiceMe.gif");
+                    }else if(oImg.getAttribute("value")=="other"){
+                        oImg.setAttribute("src","http://sysdata.qiniu.hneb.net/hneb_wx_playVoice.gif");
+                    }
+                    // 停止上次正在播放的audio
+                    this.fnStopAudioLastTime(this.sOldAudioId);
+                    //把当前的audioId赋值为老的
+                    this.sOldAudioId=id;
+                    // 播放语音
+                    oAudio.play();
+                }else{
+                    // 停止上次正在播放的audio
+                    this.fnStopAudioLastTime(this.sOldAudioId);
+                    this.sOldAudioId=id;
+                }
+            },
+            // 当语音播放完毕，就将播放动图改为静态的,通过唯一（id）的name来标识对应的语音播放动图
+            fnChangeImg:function(name){
+                // 获取当前语音对应的img图片
+                var oImg = document.getElementsByName(name)[0];// 获取出播放时的img标签
+                if(oImg.getAttribute("value")=="me"){
+                    oImg.setAttribute("src","http://sysdata.qiniu.hneb.net/hneb_wx_playVoiceMe.png");//将图片至为播放完毕的图片
+                }else{
+                    oImg.setAttribute("src","http://sysdata.qiniu.hneb.net/hneb_wx_playVoice.png");//将图片至为播放完毕的图片
+                }
+            },
+            // 停止所有的语音
+            fnStopAudioLastTime:function(id){
+                if(id==''){
+                    return;// id不能为空
+                }
+                var oAudio = document.getElementById(id);
+                var oImg = document.getElementsByName(id)[0];
+                if(!oAudio.paused){// 只有当音频在播放时进来
+                    // 把正在播放的audio暂停
+                    oAudio.currentTime = 0;
+                    // 将audio的当前播放进度调到0
+                    oAudio.pause();// 在暂停播放
+
+					/*将正在播放语音图片设置为播放完毕*/
+                    if(oImg.getAttribute("value")=="me"){//把所有value属性为me的img全部设置为播放完毕
+                        oImg.setAttribute("src","http://sysdata.qiniu.hneb.net/hneb_wx_playVoiceMe.png");
+                    }else if(oImg.getAttribute("value")=="other"){//把所有value属性为other的img全部设置为播放完毕
+                        oImg.setAttribute("src","http://sysdata.qiniu.hneb.net/hneb_wx_playVoice.png");
+                    }
+                }
+            },
+            // 获取音频长度
+            fnGetAudioLenght:function(value){
+                var iIndex = value.lastIndexOf(".");
+                var sUrl="";
+                if(parseInt(iIndex)>"http://7xqbp2.com2.z0.glb.qiniucdn.com/".length){
+                    sUrl = value.substr(0,value.lastIndexOf("."));
+                    return sUrl.substr(value.lastIndexOf("_")+1);
+                }else{
+                    return value.substr(value.lastIndexOf("_")+1);
+                }
+            },
+            // 打开报告
+			openReport:function(path){
+                window.open(path);
+            }
+        },
+        mounted: function () {
+            this.query();
+            var layoutUiHeight = document.getElementsByClassName("layoutUi")[0].offsetHeight;//过滤器高度
+            var pager = 58;//分页高度
+            var spacing = 40;//mainScroll间距
+            this.tableHeight = document.getElementsByClassName("mainBox")[0].offsetHeight - (layoutUiHeight + pager + spacing);
+        }
+    });
+
+	</script>
+</html>

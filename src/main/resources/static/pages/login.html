@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+
+    <style type="text/css">
+        body {
+            background: url(../images/loginBg.jpg) no-repeat;
+            background-size: cover;
+            position: relative;
+        }
+
+        .login {
+            width: 420px;
+            height: 380px;
+            background: #fff;
+            padding: 0 50px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-left: -210px;
+            margin-top: -190px;
+            box-sizing: border-box;
+            border-radius: 10px;
+        }
+
+        .login .logo {
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        .login .el-form-item:nth-child(2) {
+            margin-bottom: 10px;
+        }
+
+        .login .el-input__inner {
+            height: 42px;
+        }
+
+        /*.login .el-input__icon{left:0;right: initial;}*/
+        /*.login .el-input__icon+.el-input__inner{padding-left:35px;padding-right: 10px;}*/
+        .login button {
+            width: 100%;
+            height: 40px;
+        }
+
+        .login button .dwsicon-aircraft {
+            font-size: 19px;
+            margin-right: 5px;
+        }
+
+        .login button {
+            font-size: 18px
+        }
+        .browser{width:100%;background:#f5f6b4;padding-top:10px;text-align:center;position:absolute;top:0;left:0;z-index:99999}
+		.browser h4{text-align:center;font-size:22px;line-height:30px;font-family:"微软雅黑"}
+		.browser dl{height:60px;display:inline-block;margin:15px 0 0 30px}
+		.browser dl dt{width:60px;height:60px;float:left}
+		.browser dl dd{margin-left:10px;text-align:left;float:left}
+		.browser dl dd h5{font-size:14px;margin-bottom:10px}
+		.browser dl dd a{width:70px;height:25px;text-align:center;font-size:14px;color:#fff;line-height:25px;display:inline-block;background:#07d468}
+		.browser p{clear:both;padding:10px 0;margin:10px 0 0 0}
+    </style>
+
+</head>
+
+<body>
+<div id="app">
+	<div class="browser" id="browser" style="display: none;">
+		<h4>检测到您的浏览器与系统不匹配,建议使用</h4>
+		<dl style="margin-left: 0;">
+			<dt><img src="../images/360.png" title="360安全浏览器"></dt>
+			<dd>
+				<h5>360安全浏览器</h5>
+				<a href="http://dl.360safe.com/se/360se_setup.exe">立即下载</a>
+			</dd>
+		</dl>
+		<dl>
+			<dt><img src="../images/google.png" title="谷歌浏览器"></dt>
+			<dd>
+				<h5>谷歌浏览器</h5>
+				<a href="http://sw.bos.baidu.com/sw-search-sp/software/3d03c3764837b/ChromeStandalone_52.0.2743.116_Setup.exe">立即下载</a>
+			</dd>
+		</dl>
+		<p style="border-top:dashed 1px #07d468">
+			<span style="color:red">问:我使用的是360安全浏览器为何还会出现此提示？</span><br />
+			<span style="color:red">答:请点击地址栏后按钮切换到极速模式（如下图）。</span><br />
+			<img src="../images/pattern.jpg" width="254" height="60" />
+		</p>
+	</div>
+    <div class="login">
+        <div class="logo"><img src="../images/loginLogo.png"/></div>
+        <el-form :model="form" :rules="rules" ref="form">
+            <el-form-item prop="username">
+                <el-input name="username" v-model="form.username" placeholder="请输入您的用户名"></el-input>
+            </el-form-item>
+            <el-form-item prop="password">
+                <el-input name="password" v-model="form.password" type="password" placeholder="请输入您的密码"></el-input>
+            </el-form-item>
+            <el-form-item>
+                <el-checkbox>记住用户名</el-checkbox>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="primary" @click="submitForm('form')"><i class="dwsicon-aircraft"></i>登陆</el-button>
+            </el-form-item>
+        </el-form>
+    </div>
+
+    <form id="formAction" action="/login" method="post" hidden>
+        <input id="userName" name="username">
+        <input id="password" name="password">
+        <input type="submit">
+    </form>
+</div>
+</body>
+
+<script src="../plugin/vue/vue.js"></script>
+<script src="../plugin/element-ui/lib/index.js"></script>
+<link rel="stylesheet" href="../plugin/element-ui/theme-chalk/index.css">
+
+<link rel="stylesheet" href="../css/base.css"/>
+<link rel="stylesheet" href="../css/iconfont.css"/>
+
+<script src="../js/utils.js"></script>
+<script>
+	window.onload = function(){
+		function checkBrows(){
+			if("chrome"!=getBrowsType()){
+				document.getElementById("browser").style.display="block";
+				return false;
+			}
+			return true;
+		}
+		
+		function getBrowsType(){
+			var Sys = {}; 
+	        var ua = navigator.userAgent.toLowerCase(); 
+	        var s; 
+	        (s = ua.match(/msie ([\d.]+)/)) ? Sys.ie = s[1] : 
+	        (s = ua.match(/firefox\/([\d.]+)/)) ? Sys.firefox = s[1] : 
+	        (s = ua.match(/chrome\/([\d.]+)/)) ? Sys.chrome = s[1] : 
+	        (s = ua.match(/opera.([\d.]+)/)) ? Sys.opera = s[1] : 
+	        (s = ua.match(/version\/([\d.]+).*safari/)) ? Sys.safari = s[1] : 0;
+	
+	        //以下进行测试 
+	        if (Sys.firefox) return "firefox"; 
+	        if (Sys.ie) return "ie";
+	        if (Sys.chrome) return "chrome";
+	        if (Sys.opera) return "opera";
+	        if (Sys.safari) return "safari";
+		}
+		checkBrows();
+	},
+    new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                visible: false,
+                form: {
+                    username: "15111066861",
+                    password: "123456"
+                },
+                rules: {
+                    username: [
+                        {required: true, message: "请输入您的用户名"}
+                    ],
+                    password: [
+                        {required: true, message: "请输入您的密码"},
+                        {min: 6, max: 8, message: "请输入6到8位长度的密码"}
+                    ]
+                }
+            }
+        },
+         methods: {
+            submitForm: function (formName) {
+            	if(!this.checkBrows()){
+					alert("请使用推荐浏览器登录系统");
+					return;
+				}
+                var that = this;
+                this.$refs[formName].validate(function (valid) {
+                    if (valid) {
+                        var formAction = document.getElementById("formAction");
+                        var userName = document.getElementById("userName");
+                        var password = document.getElementById("password");
+                        userName.value = that.form.username;
+                        password.value = that.form.password;
+                        formAction.submit();
+                    } else {
+                        console.log('error submit!!');
+                        return false;
+                    }
+                });
+            },
+            exception: function () {
+                console.log("exception click");
+                var that = this;
+                utils.post("/login/exception", {}).then(function (res) {
+                    if (res.code != '1') {
+                        that.$message({
+                            message:res.msg,
+                            type:'error',
+                            duration:1000
+                        })
+                    }
+                });
+            },
+            checkBrows: function(){
+				if("chrome"!=this.getBrowsType()){
+					document.getElementById("browser").style.display="block";;
+					return false;
+				}
+				return true;
+			},
+			getBrowsType: function(){
+				var Sys = {}; 
+		        var ua = navigator.userAgent.toLowerCase(); 
+		        var s; 
+		        (s = ua.match(/msie ([\d.]+)/)) ? Sys.ie = s[1] : 
+		        (s = ua.match(/firefox\/([\d.]+)/)) ? Sys.firefox = s[1] : 
+		        (s = ua.match(/chrome\/([\d.]+)/)) ? Sys.chrome = s[1] : 
+		        (s = ua.match(/opera.([\d.]+)/)) ? Sys.opera = s[1] : 
+		        (s = ua.match(/version\/([\d.]+).*safari/)) ? Sys.safari = s[1] : 0;
+		
+		        //以下进行测试 
+		        if (Sys.firefox) return "firefox"; 
+		        if (Sys.ie) return "ie";
+		        if (Sys.chrome) return "chrome";
+		        if (Sys.opera) return "opera";
+		        if (Sys.safari) return "safari";
+			}
+        },
+        mounted: function () {
+        	this.checkBrows();
+            var params = utils.getRequest();
+            if (params['error'] == 'true') {
+                this.exception();
+            }
+        }
+    })
+</script>
+</html>

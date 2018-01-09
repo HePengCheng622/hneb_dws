@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<link rel="stylesheet" href="../css/base.css" />
+		<link rel="stylesheet" href="../css/iconfont.css" />
+		<style type="text/css">
+			.setUpCol{border-radius: 10px;overflow: hidden;}
+			.setUpCol dt{display: flex;justify-content: center;align-items: center;flex-direction: column;position: relative;}
+			.setUpCol dt i{font-size:80px;color: #fff;}
+			.setUpCol dt i.dwsicon-libao{font-size:85px}
+			.setUpCol dt i.dwsicon-gutou{font-size:85px}
+			.setUpCol dt span{font-size:20px;color: #fff;padding-top: 10px;}
+			.setUpCol dt.setUp1{background: #84aef9;}
+			.setUpCol dt.setUp2{background: #a9dc6a;}
+			.setUpCol dt.setUp3{background: #ef966c;}
+			.setUpCol dt.setUp4{background: #f7d06b;}
+			.setUpCol dt p{font-size:14px;color: #fff;background: rgba(255,255,255,0.3);padding: 5px 8px;position: absolute;left: 0;right: 0;bottom: 0;}
+			.setUpCol dd{background: #fff;padding: 10px 0 10px 0;}
+			.setUpCol dd .el-row{padding: 10px 0;}
+			.setUpCol dd .el-row div:first-child{font-size:14px;color: #48576a;}
+			.setUpCol dd .el-row div:last-child{font-size:14px;color: #48576a;}
+			.setUpCol dd .el-input-number{width: initial;margin-right: 5px;}
+			.setUpBtn{text-align: center;padding: 50px 0;}
+			.setUpBtn button{padding: 11px 80px;}
+		</style>
+		<script src="../plugin/vue/vue.js"></script>
+		<script src="../plugin/element-ui/lib/index.js"></script>
+		<link rel="stylesheet" href="../plugin/element-ui/theme-chalk/index.css">
+	</head>
+	
+	<body>
+		<div id="app">
+			<div class="mainBox">
+				<el-form ref="form" :model="form" label-width="60px">
+					<el-row :gutter="20">
+						<el-col :span="6">
+							<dl class="setUpCol">
+								<dt class="setUp1" :style="{height:dlWidth+'px'}">
+									<i class="dwsicon-zixun"></i>
+									<span>图文咨询</span>
+									<p>适当放松放松放松的方式对付斯蒂芬</p>
+								</dt>
+								<dd>
+									<el-row type="flex" align="middle">
+										<el-col :span="4" :push="1">状态</el-col>
+										<el-col v-model="form.setting.cPkId" hidden></el-col>
+										<el-col :span="20"><el-switch v-model="tw" on-text="开启" off-text="关闭"></el-switch></el-col>
+									</el-row>
+									<el-row type="flex" align="middle">
+										<el-col :span="4" :push="1">价格</el-col>
+										<el-col v-model="form.twprice.cPkId" hidden></el-col>
+										<el-col :span="18"><el-input-number :disabled="!tw" v-model="form.twprice.nPrice" :min="1" :max="500"></el-input-number></el-col>
+										<el-col :span="2">元</el-col>
+									</el-row>
+								</dd>
+							</dl>
+						</el-col>
+						<el-col :span="6">
+							<dl class="setUpCol">
+								<dt class="setUp2" :style="{height:dlWidth+'px'}">
+									<i class="dwsicon-phone"></i>
+									<span>电话咨询</span>
+									<p>适当放松放松放松的方式对付斯蒂芬</p>
+								</dt>
+								<dd>
+									<el-row type="flex" align="middle">
+										<el-col :span="4" :push="1">状态</el-col>
+										<el-col :span="20"><el-switch v-model="dh" on-text="开启" off-text="关闭"></el-switch></el-col>
+									</el-row>
+									<el-row type="flex" align="middle">
+										<el-col :span="4" :push="1">价格</el-col>
+										<el-col v-model="form.dhprice.cPkId" hidden></el-col>
+										<el-col :span="18"><el-input-number :disabled="!dh" v-model="form.dhprice.nPrice" :min="1" :max="500"></el-input-number></el-col>
+										<el-col :span="2">元</el-col>
+									</el-row>
+								</dd>
+							</dl>
+						</el-col>
+						<el-col :span="6">
+							<dl class="setUpCol">
+								<dt class="setUp3" :style="{height:dlWidth+'px'}">
+									<i class="dwsicon-libao"></i>
+									<span>服务包</span>
+									<p>适当放松放松放松的方式对付斯蒂芬</p>
+								</dt>
+								<dd>
+									<el-row type="flex" align="middle">
+										<el-col :span="4" :push="1">状态</el-col>
+										<el-col :span="20"><el-switch v-model="fw" on-text="开启" off-text="关闭"></el-switch></el-col>
+									</el-row>
+									<el-row type="flex" align="middle">
+										<el-col :span="4" :push="1">价格</el-col>
+										<el-col :span="18"><el-input-number :disabled="!fw"  :min="1" :max="500"></el-input-number></el-col>
+										<el-col :span="2">元</el-col>
+									</el-row>
+								</dd>
+							</dl>
+						</el-col>
+						<el-col :span="6">
+							<dl class="setUpCol">
+								<dt class="setUp4" :style="{height:dlWidth+'px'}">
+									<i class="dwsicon-gutou"></i>
+									<span>骨龄</span>
+									<p>适当放松放松放松的方式对付斯蒂芬</p>
+								</dt>
+								<dd>
+									<el-row type="flex" align="middle">
+										<el-col :span="4" :push="1">状态</el-col>
+										<el-col :span="20"><el-switch v-model="gl" on-text="开启" off-text="关闭"></el-switch></el-col>
+									</el-row>
+									<el-row type="flex" align="middle">
+										<el-col :span="4" :push="1">价格</el-col>
+										<el-col :span="18"><el-input-number :disabled="!gl" :min="1" :max="500"></el-input-number></el-col>
+										<el-col :span="2">元</el-col>
+									</el-row>
+								</dd>
+							</dl>
+						</el-col>
+					</el-row>
+					<div class="setUpBtn">
+						<el-button type="primary" size="large" @click="save">保　　存</el-button>
+					</div>
+				</el-form>
+			</div>
+		</div>
+		
+		
+	</body>
+
+	<script src="../js/utils.js"></script>
+	<script>
+        new Vue({
+            el: '#app',
+            data: function () {
+                return {
+                    form: {
+                        setting:{cPkId:"0",nPrice:0},
+                        dhprice:{cPkId:"0",nPrice:0},
+                        twprice:{cPkId:"0",nPrice:0}
+					},
+					tw:false,
+					dh:false,
+					fw:false,
+					gl:false,
+                    dlWidth: 0
+                }
+            },
+            methods: {
+                save: function () {
+                    // 将更改过得数据放入form中
+                    this.form.setting.cTxtAdj=this.tw==true?"Y":"N";
+                    this.form.setting.cTelAdj=this.dh==true?"Y":"N";
+                    this.form.setting.cSerAdj=this.fw==true?"Y":"N";
+                    this.form.setting.cBonAdj=this.gl==true?"Y":"N";
+                    var that = this;
+                    utils.post("/setting/saveData", this.form).then(function (res) {
+                        if(res.code=='1'){
+                            that.$message({
+                                message:res.msg,
+								type:'success',
+                                duration:1000
+							})
+						}else{
+                            that.$message({
+                                message:res.msg,
+                                type:'error',
+                                duration:1000
+                            })
+						}
+
+                    }, function (res) {
+                        that.$message({
+                            message:res.msg,
+                            type:'error',
+                            duration:1000
+                        })
+                    });
+				}
+            },
+            created: function () {
+                var that = this;
+                utils.post("/setting/details").then(function (res) {
+                    console.log(res.data);
+                    that.form = res.data;
+                    that.tw=res.data.setting.cTxtAdj=="Y"?true:false;
+                    that.dh=res.data.setting.cTelAdj=="Y"?true:false;
+                    that.$message({
+                        message:res.msg,
+                        type:'success',
+                        duration:1000
+                    })
+                }, function (res) {
+                    that.$message({
+                        message:res.msg,
+                        type:'error',
+                        duration:1000
+                    })
+                });
+                this.dlWidth = (document.getElementsByClassName("mainBox")[0].offsetWidth - 100) / 4;
+            }
+
+        });
+  </script>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<link rel="stylesheet" href="../css/base.css" />
+		<script src="../plugin/vue/vue.js"></script>
+		<script src="../plugin/element-ui/lib/index.js"></script>
+		<link rel="stylesheet" href="../plugin/element-ui/theme-chalk/index.css">
+		<style type="text/css">
+			.distributionTit{font-size:30px;text-align: center;padding-top: 20px;display: none;}
+			.distribution{margin-top: 20px;}
+			.distribution .el-col{margin-bottom: 20px;}
+			.distribution .distributionBox{padding: 10px 15px;border: solid 1px #DCDFE6;border-left: solid 3px #409EFF;border-radius: 3px;}
+			.distribution .distributionBox li{font-size: 14px;line-height: 22px;color: #5a5e66;}
+			@media print {
+				@page{margin:0.3cm 0.4cm}
+				*{color: #000;}
+				.mainBox{height: initial;}
+				.billTit{display: block;}
+				.layoutUi{display: none;}
+				.distribution .el-col{width: 100%;}
+				.distribution .distributionBox{border:none;padding: 0;padding-left: 60px;}
+				.distribution .distributionBox li{color: #000;}
+			}
+		</style>
+	</head>
+	
+	<body>
+		<div id="app">
+			<div class="distributionTit">2017-12-22中餐菜单</div>
+			<div class="mainBox height100">
+				<div class="layoutUi" style="border-bottom: solid 1px #DCDFE6;">
+		            <el-form :inline="true">
+						<el-form-item>
+							<el-date-picker v-model="tm" type="date" placeholder="选择日期" value-format="yyyy-MM-dd"></el-date-picker>
+						</el-form-item>
+						<el-form-item>
+							<el-select v-model="mealMrk" placeholder="请选择餐别" clearable >
+								<el-option key="1" label="早餐" value="1"></el-option>
+								<el-option key="2" label="早加餐" value="2"></el-option>
+								<el-option key="3" label="午餐" value="3"></el-option>
+								<el-option key="4" label="下午加餐" value="4"></el-option>
+								<el-option key="5" label="晚餐" value="5"></el-option>
+								<el-option key="6" label="晚加餐" value="6"></el-option>
+							</el-select>
+						</el-form-item>
+						<el-form-item>
+							<el-input v-model="phoneNo" placeholder="请输入联系电话"></el-input>
+						</el-form-item>
+						<el-form-item>
+							<el-button type="primary" plain @click="query">查询</el-button>
+						</el-form-item>
+					</el-form>
+					<div class="layoutUiRight">
+						<el-button type="primary" @click="printPage">打印配送信息</el-button>
+					</div>
+			    </div>
+			    <el-row :gutter="20" class="distribution">
+			    	<el-col :span="12" v-for="item in list">
+			    		<ul class="distributionBox">
+			    			<li>姓　　名：{{item.addr.nme}}</li>
+			    			<li>联系电话：{{item.addr.phoneNo}}</li>
+			    			<li>配送时间：{{getTime(item.addr)}}</li>
+			    			<li>配送地址：{{getAddr(item.addr)}}</li>
+			    			<li>菜品清单：{{getbill(item.recipe)}}</li>
+			    		</ul>
+			    	</el-col>
+			    </el-row>
+			</div>
+		</div>
+	</body>
+	<script src="../js/utils.js"></script>
+	<script>
+		new Vue({
+			el: '#app',
+			data: function() {
+				return {
+					tm: new Date(),
+					mealMrk:'',
+					phoneNo:'',
+					list:[]
+				}
+			},
+			methods:{
+				printPage(){
+				    window.print();
+				},
+				query(){
+				    utils.post('/distribution/query',{
+				        eatTm:this.tm,
+						mealMrk:this.mealMrk
+					}).then(res=>{
+                        if(res.code=='1'){
+                            this.list=res.data;
+                            this.$message({
+                                message: "查询成功",
+                                type: 'success',
+                                duration: 1000
+                            })
+                        }else{
+                            this.$message({
+                                message: "系统繁忙",
+                                type: 'error',
+                                duration: 1000
+                            })
+                        }
+					});
+				},
+                getTime(val){
+				    let eatTm = val.eatTm;
+				    let mealMrk = val.mealMrk;
+				    let mark = "";
+				    switch (parseInt(mealMrk)){
+						case 1: mark='早餐';break;
+						case 2: mark='中餐前';break;
+						case 3: mark='中餐';break;
+						case 4: mark='晚餐前';break;
+						case 5: mark='晚餐';break;
+						case 6: mark='晚餐后';break;
+					}
+
+					return eatTm+"	"+mark;
+				},
+				getAddr(val){
+				    return val.province+val.city+val.zone+val.addr;
+				},
+                getbill(val){
+				    let str="";
+				    for(let obj in val){
+				        str=str+val[obj].recipeNme+",";
+					}
+					return str.substring(0,str.length-1);
+				}
+			}
+		})
+  </script>
+</html>

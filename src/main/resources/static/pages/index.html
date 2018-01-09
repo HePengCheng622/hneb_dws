@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../css/base.css"/>
+    <link rel="stylesheet" href="../css/iconfont.css"/>
+    <style type="text/css">
+        .el-tabs__header {
+            background: #f2f2f2;
+            margin: 0;
+        }
+
+        .el-tabs__item {
+            height: 41px;
+            line-height: 41px;
+        }
+
+        .el-tabs--card > .el-tabs__header .el-tabs__item {
+            border-top: none !important
+        }
+
+        .el-tabs--card > .el-tabs__header .el-tabs__item.is-active {
+            border-radius: initial;
+            background: #f5f6fa;
+            border-bottom-color: #f5f6fa;
+        }
+        .homeTabs .el-tabs__header{margin: 0;}
+        .el-menu-item [class^=dwsicon-]{position: relative;top: -1px;}
+        .el-menu-item [class^=dwsicon-].dwsicon-shicai{font-size:22px}
+        .el-menu-item [class^=dwsicon-].dwsicon-shiwujinji{font-size:19px}
+        .el-menu-item [class^=dwsicon-].dwsicon-shipu{font-size:19px}
+        .el-menu-item [class^=dwsicon-].dwsicon-purchase{font-size:21px}
+    </style>
+    <script src="../plugin/vue/vue.js"></script>
+    <script src="../plugin/element-ui/lib/index.js"></script>
+    <link rel="stylesheet" href="../plugin/element-ui/theme-chalk/index.css">
+</head>
+
+<body>
+<div id="app">
+    <!--左边菜单-->
+    <div class="dwsMenu">
+        <div class="logo">
+            <p><img src="../images/logo.png" /></p>
+            <span>儿童健康管理系统（医生版）</span>
+        </div>
+        <el-menu :default-active="navActive" @select="handleAddTabs" theme="dark">
+            <!--<el-menu-item index="1"><i class="dwsicon-daiban"></i>待办</el-menu-item>-->
+            <el-menu-item :index="index+1+''" v-for="(item,index) in contentList">
+                <i :class="item.icon"></i>{{item.title}}
+            </el-menu-item>
+        </el-menu>
+        <dl>
+            <dt><img :src="user.cUserIconUrl"/></dt>
+            <dd>
+                <p>{{user.cUserNme}}</p>
+                <ul>
+                    <li @click="showModify = !showModify">修改密码</li>
+                    <li @click="exitLogin">退出</li>
+                </ul>
+            </dd>
+        </dl>
+    </div>
+    <!--右边主体内容-->
+    <div class="dwsMain">
+        <el-tabs v-model="editableTabsValue" type="card" closable @tab-remove="removeTab" class="homeTabs">
+            <el-tab-pane v-html="item.content" :key="item.name" v-for="(item, index) in editableTabs"
+                         :label="item.title" :name="item.name">
+            </el-tab-pane>
+        </el-tabs>
+    </div>
+    <div class="copyright">Copyright ©2017 湖南尔葆健康科技有限公司 v1.0 All Rights Reserved.</div>
+    <!--修改密码弹出窗口-->
+    <el-dialog title="修改密码" size="tiny" :visible.sync="showModify">
+        <el-form label-width="90px">
+            <el-form-item label="原始密码">
+                <el-input type="password" v-model="oldPassword"></el-input>
+            </el-form-item>
+            <el-form-item label="新密码">
+                <el-input type="password" v-model="newPassword"></el-input>
+            </el-form-item>
+            <el-form-item label="确认新密码">
+                <el-input type="password" v-model="rePassword"></el-input>
+            </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="showModify = !showModify">取 消</el-button>
+            <el-button type="primary" @click="modifyPassword();">确 定</el-button>
+        </div>
+    </el-dialog>
+
+	<form id="logoutForm" action="/logout" hidden method="post"></form>
+</div>
+</body>
+
+<script src="../js/utils.js"></script>
+<script>
+    var vue = new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                iframeHeight: 0,
+                visible: false,
+                showModify: false,
+                editableTabsValue: '1',
+                navActive:'0',
+                user: {cUserNme:"",cUserId:"",cUserIconUrl:""},
+                oldPassword: '',
+                newPassword: '',
+                rePassword: '',
+                contentList: [
+//                    {
+//                        title: '待办',
+//                        content: '<iframe src="/pages/todo.html" frameborder="0" width="100%" height="' + this.iframeHeight + 'px"></iframe>'
+//                    }, {
+//                        title: '已办',
+//                        content: '<iframe src="/pages/finish.html" frameborder="0" width="100%" height="' + this.iframeHeight + 'px"></iframe>'
+//                    }, {
+//                        title: '收入',
+//                        content: '<iframe src="" frameborder="0" width="100%" height="' + this.iframeHeight + 'px"></iframe>'
+//                    }, {
+//                        title: '设置',
+//                        content: '<iframe src="/pages/setting.html" frameborder="0" width="100%" height="' + this.iframeHeight + 'px"></iframe>'
+//                    }
+                    {
+                        icon:"dwsicon-shucaidan",
+                        title: '基础数据',
+                        content: '<iframe src="/pages/commCode.html" frameborder="0" width="100%" height="' + this.iframeHeight + 'px"></iframe>'
+                    },
+                    {
+                        icon:"dwsicon-shicai",
+                        title: '食物禁忌',
+                        content: '<iframe src="/pages/tabooList.html" frameborder="0" width="100%" height="' + this.iframeHeight + 'px"></iframe>'
+                    },
+                    {
+                        icon:"dwsicon-shiwujinji",
+                        title: '食材库',
+                        content: '<iframe src="/pages/food.html" frameborder="0" width="100%" height="' + this.iframeHeight + 'px"></iframe>'
+                    },
+                    {
+                        icon:"dwsicon-shipu",
+                        title: '菜品库',
+                        content: '<iframe src="/pages/recipeList.html" frameborder="0" width="100%" height="' + this.iframeHeight + 'px"></iframe>'
+                    },
+                    {
+                        icon:"dwsicon-caidan",
+                        title: '餐单',
+                        content: '<iframe src="/pages/carteList.html" frameborder="0" width="100%" height="' + this.iframeHeight + 'px"></iframe>'
+                    },
+                    {
+                        icon:"dwsicon-purchase",
+                        title: '采购清单',
+                        content: '<iframe src="/pages/procure.html" frameborder="0" width="100%" height="' + this.iframeHeight + 'px"></iframe>'
+                    },
+                    {
+                        icon:"dwsicon-cooking",
+                        title: '烹饪清单',
+                        content: '<iframe src="/pages/bill.html" frameborder="0" width="100%" height="' + this.iframeHeight + 'px"></iframe>'
+                    },
+                    {
+                        icon:"dwsicon-distribution",
+                        title: '配送清单',
+                        content: '<iframe src="/pages/distribution.html" frameborder="0" width="100%" height="' + this.iframeHeight + 'px"></iframe>'
+                    },
+                ],
+                editableTabs: [{
+                    title: '首页',
+                    name: '1',
+                    content: '<iframe src="/pages/welcome.html" frameborder="0" width="100%" height="' + this.iframeHeight + 'px"></iframe>'
+                }],
+            }
+        },
+        methods: {
+            removeTab: function (targetName) {
+                // 如果只有一个tab页时不让用户继续删除
+                if(this.editableTabs.length==1){
+                    return;
+                }
+                var tabs = this.editableTabs;
+                var activeName = this.editableTabsValue;
+                var navTitle="";
+                if (activeName === targetName) {
+                    tabs.forEach(function (tab, index) {
+                        if (tab.name === targetName) {
+                            var nextTab = tabs[index + 1] || tabs[index - 1];
+                            if (nextTab) {
+                                activeName = nextTab.name;
+                                navTitle=nextTab.title;
+                            }
+                        }
+                    });
+                }
+                // 选中当前页
+                this.editableTabsValue = activeName;
+                // 去除多余的导航数据
+                this.editableTabs = tabs.filter(function (tab) {
+                    return tab.name !== targetName;
+                });
+                // 选中当前导航
+                for(var i=0;i<this.contentList.length;i++){
+                    if(this.contentList[i].title==navTitle){
+                        this.navActive=i+1+'';
+                        return;
+                    }
+                }
+            },
+            handleAddTabs: function (key, keyPath) {
+                // 判断是否页面已打开，如果打开了，直接选中页面
+                for (var i = 0; i < this.editableTabs.length; i++) {
+                    console.log(this.editableTabs[i].title)
+                    if (this.editableTabs[i].title == this.contentList[key-1].title) {
+                        this.editableTabsValue = this.editableTabs[i].name;
+                        return;
+                    }
+                }
+                // 添加页面
+                var  newTabName = (this.editableTabs[this.editableTabs.length-1].name + 1)+'';
+                this.editableTabs.push({
+                    title: this.contentList[key - 1].title,
+                    name: newTabName,
+                    content: this.contentList[key - 1].content
+                });
+                this.editableTabsValue = newTabName;
+            },
+            exitLogin: function () {
+                this.$confirm('是否退出医生个人工作站?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(function () {
+                    document.getElementById("logoutForm").submit();
+                }).catch(function () {
+                });
+            },
+            modifyPassword: function () {
+                // 判断密码是否一致
+                if (this.newPassword != this.rePassword) {
+                    this.$message({
+                        message:"密码不一致",
+                        type:'error',
+                        duration:1000
+                    })
+                    return;
+                }
+                var data = {
+                    cUserId: this.user.cUserId,
+                    newPassword: this.newPassword,
+                    oldPassword: this.oldPassword
+                };
+                var that = this;
+                utils.post("/user/modifyPassword", data).then(function (res) {
+                    if (res.code == 1) {
+                        that.$message({
+                            message:res.msg,
+                            type:'success',
+                            duration:1000
+                        })
+                        that.showModify = !that.showModify
+                    } else {
+                        that.$message({
+                            message:res.msg,
+                            type:'error',
+                            duration:1000
+                        })
+                    }
+                }, function (res) {
+                    that.$message({
+                        message:res.msg,
+                        type:'error',
+                        duration:1000
+                    })
+                });
+            }
+        },
+        beforeCreate: function () {
+            var that=this;
+            utils.post("/user/userInfo", {}).then(function (res) {
+                that.user=res.data;
+                console.log(that.user)
+            });
+            this.iframeHeight = document.getElementsByClassName("dwsMain")[0].offsetHeight - 41;
+        }
+    })
+</script>
+</html>

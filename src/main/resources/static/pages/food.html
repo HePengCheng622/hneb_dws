@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../css/base.css"/>
+    <script src="../plugin/vue/vue.js"></script>
+    <script src="../plugin/element-ui/lib/index.js"></script>
+    <link rel="stylesheet" href="../plugin/element-ui/theme-chalk/index.css">
+</head>
+<body>
+<div id="app">
+    <div class="mainBox height100">
+        <div class="layoutUi">
+            <el-form :inline="true">
+                <el-form-item>
+                    <el-cascader change-on-select :options="foodType" v-model="form.typeValue"  @change="changeCount" >
+                    </el-cascader>
+                </el-form-item>
+                <el-form-item>
+                    <el-input v-model="form.foodNme" placeholder="请输入食物名称" @change="changeCount"></el-input>
+                </el-form-item>
+                <el-form-item>
+                    <el-select v-model="form.orderByNme" placeholder="营养排序">
+                        <el-option v-for="item in orderByNme" :key="item.value" :label="item.label"
+                                   :value="item.value"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item>
+                    <el-select v-model="form.orderByType" placeholder="排序顺序">
+                        <el-option v-for="item in orderByType" :key="item.value" :label="item.label"
+                                   :value="item.value"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" plain @click="fetchFood">查询</el-button>
+					<el-button type="primary" plain @click="rest">重置</el-button>
+                </el-form-item>
+            </el-form>
+        </div>
+        <el-table :data="tableData.resultList" :height="tableHeight">
+            <!--数据区域-->
+            <el-table-column prop="C_PK_ID" label="ID" v-if="false"></el-table-column>
+            <el-table-column fixed prop="C_NAME" label="名称" width="120"></el-table-column>
+            <el-table-column prop="C_SEC_KIND_NME" label="类型" width="90"></el-table-column>
+            <el-table-column prop="N_EDIBLE" label="食部" width="90"></el-table-column>
+            <el-table-column prop="N_WATER" label="水分" width="90"></el-table-column>
+            <el-table-column prop="N_ENERGY_1" label="能量KCAL" width="90"></el-table-column>
+            <el-table-column prop="N_ENERGY_2" label="能量KJ" width="90"></el-table-column>
+            <el-table-column prop="N_PROTEIN" label="蛋白质" width="90"></el-table-column>
+            <el-table-column prop="N_FAT" label="脂肪" width="90"></el-table-column>
+            <el-table-column prop="N_CHO" label="碳水化合物" width="90"></el-table-column>
+            <el-table-column prop="N_DIETARY_FIBER" label="不溶性纤维" width="90"></el-table-column>
+            <el-table-column prop="N_CHOLESTEROL" label="胆固醇" width="90"></el-table-column>
+            <el-table-column prop="N_ASH" label="灰分" width="90"></el-table-column>
+            <el-table-column prop="N_VA" label="维他命A" width="90"></el-table-column>
+            <el-table-column prop="N_CAROTENE" label="胡萝卜素" width="90"></el-table-column>
+            <el-table-column prop="N_RETINOL" label="视黄醇" width="90"></el-table-column>
+            <el-table-column prop="N_THIAMIN" label="硫胺素" width="90"></el-table-column>
+            <el-table-column prop="N_RIBOFLAVIN" label="核黄素" width="90"></el-table-column>
+            <el-table-column prop="N_NIACIN" label="尼克酸" width="90"></el-table-column>
+            <el-table-column prop="N_VC" label="维他命C" width="90"></el-table-column>
+            <el-table-column prop="N_VE_TOTAL" label="维生素E" width="90"></el-table-column>
+            <el-table-column prop="N_CA" label="钙" width="90"></el-table-column>
+            <el-table-column prop="N_P" label="磷" width="90"></el-table-column>
+            <el-table-column prop="N_K" label="钾" width="90"></el-table-column>
+            <el-table-column prop="N_NA" label="钠" width="90"></el-table-column>
+            <el-table-column prop="N_MG" label="镁" width="90"></el-table-column>
+            <el-table-column prop="N_FE" label="铁" width="90"></el-table-column>
+            <el-table-column prop="N_ZN" label="锌" width="90"></el-table-column>
+            <el-table-column prop="N_SE" label="硒" width="90"></el-table-column>
+            <el-table-column prop="N_CU" label="铜" width="90"></el-table-column>
+            <el-table-column prop="N_MN" label="锰" width="90"></el-table-column>
+            <!--这3条暂时没有数据-->
+            <!--<el-table-column prop="N_GI" label="GI" width="90"></el-table-column>-->
+            <!--<el-table-column prop="N_SALT" label="盐" width="90"></el-table-column>-->
+            <!--<el-table-column prop="N_SUGAR" label="糖" width="90"></el-table-column>-->
+            <el-table-column prop="N_TOTAL" label="100g计算" width="90"></el-table-column>
+            <!--操作区域，暂时不需要进行增删改操作-->
+            <!--<el-table-column fixed="right" label="操作" width="90">-->
+                <!--<template slot-scope="scope">-->
+                    <!--<el-button @click="handleClick(scope.row)" type="text" size="small">查看</el-button>-->
+                    <!--<el-button type="text" size="small">编辑</el-button>-->
+                <!--</template>-->
+            <!--</el-table-column>-->
+        </el-table>
+        <el-pagination :current-page="form._pageNum" :page-sizes="[10,20, 50, 100]" :page-size="form._pageSize"
+                       @current-change="handleCurrentChange"
+                       @size-change="handleSizeChange"
+                       layout="total, sizes, prev, pager, next, jumper" :total="tableData.total">
+        </el-pagination>
+    </div>
+</div>
+</body>
+</html>
+<script src="../js/utils.js"></script>
+<script>
+    var vm=new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                tableData: [],
+                form: {//表单上数据
+                    typeValue: [],// 食物类型
+                    foodNme:"",// 食物名称
+                    orderByNme: "",//根据食物的某个值排序
+                    orderByType: "",// 排序类型（升序还是降序）
+                    _count: true,// 是否进行统计
+                    _pageNum: 1,// 当前页面
+                    _pageSize: 10,// 当前页面数据条数
+                    _total: 0,//总数
+                },
+                tableHeight:0,//table的动态高度
+                foodType:[],// 食物类型
+                orderByNme:[
+                            {value:'n_water',label:'水分'},
+							{value:'n_energy_1',label:'能量kcal'},
+							{value:'n_energy_2',label:'能量kj'},
+							{value:'n_protein',label:'蛋白质'},
+							{value:'n_fat',label:'脂肪\n'},
+							{value:'n_cho',label:'碳水化合物'},
+							{value:'n_dietary_fiber',label:'不溶性纤维'},
+							{value:'n_cholesterol',label:'胆固醇'},
+							{value:'n_ash',label:'灰分'},
+							{value:'n_va',label:'维他命A'},
+							{value:'n_carotene',label:'胡萝卜素'},
+							{value:'n_retinol',label:'视黄醇'},
+							{value:'n_thiamin',label:'硫胺素'},
+							{value:'n_riboflavin',label:'核黄素'},
+							{value:'n_niacin',label:'尼克酸'},
+							{value:'n_vc',label:'维他命c'},
+							{value:'n_ve_total',label:'维生素E_1'},
+							{value:'n_ca',label:'钙'},
+							{value:'n_p',label:'磷'},
+							{value:'n_k',label:'钾'},
+							{value:'n_na',label:'钠'},
+							{value:'n_mg',label:'镁'},
+							{value:'n_fe',label:'铁'},
+							{value: 'n_zn',label:'锌'},
+							{value: 'n_se',label:'硒'},
+							{value: 'n_cu',label:'铜'},
+							{value: 'n_mn',label:'锰'}],// 以那些字段排序
+                orderByType: [
+                    {
+                        value: 'DESC',
+                        label: '从高到低'
+                    },
+                    {
+                        value: 'ASC',
+                        label: '从低到高'
+                    }
+                ],// 排序方式是以升序还是降序排
+            }
+        },
+        methods: {
+            rest:function(){
+              	this.form.typeValue=[];
+                this.form.foodNme="";
+                this.form.orderByNme="";
+                this.form.orderByType="";
+                this.form._count=true;// 将count为true，重新去统计
+			},
+            handleClick: function (row) {
+                console.log(row);
+            },
+            /*获取食物*/
+            fetchFood: function () {
+                this.form._total = this.tableData.total;
+                var that = this;
+                utils.post("/food/fetchFood", this.form).then(function (res) {
+                    if (res.code == '1') {// 如果成功请求且code为1
+                        // 将数据赋值给tablatData
+                        that.tableData = res.data;
+                        that.$message({
+                            message: res.msg,
+                            type: 'success',
+                            duration: 900
+                        })
+                    } else {
+                        that.$message({
+                            message: res.msg,
+                            type: 'error',
+                            duration: 900
+                        })
+                    }
+
+                }, function (res) {
+                    that.$message({
+                        message: res.msg,
+                        type: 'error',
+                        duration: 900
+                    })
+                });
+                this.form._count = false;// 每次请求完至为false
+            },
+            // 当显示页面条数发生改变
+            handleSizeChange: function (val) {
+                this.form._pageSize = val;
+                this.fetchFood();
+            },
+            // 当当前页面发生改变
+            handleCurrentChange: function (val) {
+                this.form._pageNum = val;
+                this.fetchFood();
+            },
+            // 当搜索的食物名发生改变
+            changeCount:function(){
+                this.form._count=true;// 将count为true，重新去统计
+            }
+        },
+        mounted: function () {
+            //动态设置table的高度
+            let layoutUiHeight = document.getElementsByClassName("layoutUi")[0].clientHeight;
+            let pagination = document.getElementsByClassName("el-pagination")[0].clientHeight;
+            let mainHeight = document.getElementsByClassName("mainBox")[0].clientHeight
+            this.tableHeight = mainHeight-layoutUiHeight-pagination-40;
+            let that = this;
+            utils.initCascader([{
+                model:that.foodType,
+                code:'01'
+            }]);
+            this.fetchFood();// 加载数据
+        }
+    });
+</script>

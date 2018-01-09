@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../css/base.css"/>
+    <script src="../plugin/vue/vue.js"></script>
+    <script src="../plugin/element-ui/lib/index.js"></script>
+    <link rel="stylesheet" href="../plugin/element-ui/theme-chalk/index.css">
+</head>
+<body>
+<div id="app">
+    <div class="mainBox">
+    	<div class="layoutUi">
+    		<el-tabs v-model="activeName" @tab-click="handleClick">
+	            <el-tab-pane label="基本信息" name="0"></el-tab-pane>
+	            <el-tab-pane label="原料清单" name="1"></el-tab-pane>
+	            <el-tab-pane label="营养成分" name="2"></el-tab-pane>
+	        </el-tabs>
+	        <div class="layoutUiRight">
+	        	<el-button type="primary" size="small" v-if="isShow" icon="el-icon-check" @click="save()">保存</el-button>
+	        </div>
+    	</div>
+        <el-form ref="form" :rules="rules" :model="form" label-width="125px">
+            <!--基本信息-->
+            <el-row :gutter="20" style="margin:0" v-if="menu[0]">
+                <!--<div class="title">基本信息</div>-->
+                <el-col :span="12">
+                    <el-form-item label="类型" label-width="60px" prop="cTypes" >
+                        <el-select v-model="form.cTypes" multiple placeholder="请选择类型" style="width: 100%;" :disabled="!isShow">
+                            <el-option-group v-for="group in types" :key="group.label" :label="group.label">
+                                <el-option v-for="item in group.children" :key="item.value" :label="item.label" :value="item.value">
+                                </el-option>
+                            </el-option-group>
+                        </el-select>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                    <el-form-item label="名称" label-width="60px" prop="cName" >
+                        <el-input placeholder="请输入名称" v-model="form.cName" :disabled="!isShow"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                    <el-form-item label="标签" label-width="60px" prop="cTags">
+                        <el-select v-model="form.cTags" multiple placeholder="请选择标签" :disabled="!isShow" style="width: 100%;">
+                            <el-option v-for="item in tags" :key="item.value" :label="item.label"
+                                       :value="item.value"></el-option>
+                        </el-select>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                    <el-form-item label="调料" label-width="60px" prop="cSeasoning">
+                        <el-input placeholder="请输入调料名称" v-model="form.cSeasoning" :disabled="!isShow"></el-input>
+                        <!--<el-select v-model="form.cSeasoning" multiple placeholder="请选择调料" style="width: 100%;">-->
+                            <!--<el-option v-for="item in seasonings" :key="item.value" :label="item.label"-->
+                                       <!--:value="item.value"></el-option>-->
+                        <!--</el-select>-->
+                    </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                    <el-form-item label="特性" label-width="60px" prop="cFeatures" >
+                        <el-input type="textarea" :rows="4" placeholder="请输入特性":disabled="!isShow" v-model="form.cFeatures"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                    <el-form-item label="事项" label-width="60px" prop="cMatter">
+                        <el-input type="textarea" :rows="4" placeholder="请输入事项" :disabled="!isShow" v-model="form.cMatter"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="24">
+                    <el-form-item label="做法" label-width="60px" prop="cPractice">
+                        <el-input type="textarea" :rows="6" placeholder="请输入做法" :disabled="!isShow" v-model="form.cPractice"></el-input>
+                    </el-form-item>
+                </el-col>
+            </el-row>
+            <!--原料-->
+            <el-row v-if="menu[1]">
+                <!--<div class="title">原料</div>-->
+                <el-table :data="foodData" >
+                    <el-table-column prop="cFoodId" v-if="false"></el-table-column>
+                    <el-table-column prop="cFoodNme" label="原料"></el-table-column>
+                    <el-table-column prop="nWeight" label="重量(克)"></el-table-column>
+                    <!--操作区域-->
+                    <el-table-column fixed="right" label="操作" width="90" v-if="isShow" >
+                        <template slot-scope="scope">
+                            <el-button @click="dialogFormVisible=true;currentFood=scope.row;" type="text" size="small">编辑</el-button>
+                            <el-button @click="deleteFood(scope.row)" type="text" size="small">删除</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <el-row style="text-align: right;margin-top: 15px;">
+                    <el-button type="primary" size="small" plain v-if="menu[1]&&isShow" @click="openPopWin()">新增</el-button>
+                </el-row>
+            </el-row>
+            <!--营养成分-->
+            <el-row :gutter="20" style="margin:0;" v-if="menu[2]">
+                <!--<div class="title">营养成分</div>-->
+                <el-col :span="8">
+                    <el-form-item label="能量KCAL(千卡)">
+                        <el-input v-model="toFixed('nEnergy1')" formatter="formatNumber" :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="能量KJ(千卡)">
+                        <el-input v-model="toFixed('nEnergy2')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="蛋白质(克)">
+                        <el-input v-model="toFixed('nProtein')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="脂肪(克)">
+                        <el-input v-model="toFixed('nFat')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="碳水化合物(克)">
+                        <el-input v-model="toFixed('nCho')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="膳食纤维(克)">
+                        <el-input v-model="toFixed('nDietaryFiber')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="胆固醇(毫克)">
+                        <el-input v-model="toFixed('nCholesterol')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="灰分(克)">
+                        <el-input v-model="toFixed('nAsh')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="维生素A(微克)">
+                        <el-input v-model="toFixed('nVa')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="维生素C(毫克)">
+                        <el-input v-model="toFixed('nVc')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="维生素E(毫克)">
+                        <el-input v-model="toFixed('nVeTotal')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="硫胺素(毫克)">
+                        <el-input v-model="toFixed('nRiboflavin')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="核黄素(毫克)">
+                        <el-input v-model="toFixed('nThiamin')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="胡萝卜素(微克)">
+                        <el-input v-model="toFixed('nCarotene')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="钙(毫克)">
+                        <el-input v-model="toFixed('nCa')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="锌(毫克)">
+                        <el-input v-model="toFixed('nZn')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="铁(毫克)">
+                        <el-input v-model="toFixed('nFe')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="磷(毫克)">
+                        <el-input v-model="toFixed('nP')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="钾(毫克)">
+                        <el-input v-model="toFixed('nK')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="钠(毫克)">
+                        <el-input v-model="toFixed('nNa')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="镁(毫克)">
+                        <el-input v-model="toFixed('nMg')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="硒(微克)">
+                        <el-input v-model="toFixed('nSe')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="铜(毫克)">
+                        <el-input v-model="toFixed('nCu')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                    <el-form-item label="锰(毫克)">
+                        <el-input v-model="toFixed('nMn')"  :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+            </el-row>
+
+            <el-dialog title="修改重量" :visible.sync="dialogFormVisible" width="35%">
+                <el-form :model="currentFood" >
+                    <el-form-item :label="currentFood.cFoodNme">
+                        <el-input v-model="currentFood.nWeight" auto-complete="off">
+                            <template slot="append">克</template>
+                        </el-input>
+                    </el-form-item>
+                </el-form>
+                <div slot="footer" class="dialog-footer">
+                    <el-button @click="dialogFormVisible = false">取 消</el-button>
+                    <el-button type="primary" @click="editFood">确 定</el-button>
+                </div>
+            </el-dialog>
+        </el-form>
+    </div>
+</div>
+</body>
+</html>
+<script src="../js/utils.js"></script>
+<script>
+    var vm = new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                isShow:true,//是否显示新增，编辑，删除，保存按钮
+                dialogFormVisible:false,// 是否显示弹出框
+                currentFood:{},// 点击编辑时当前数据的对象
+                form: {
+                    cTags:[]
+                },// 表单数据
+                types: [],// 下拉显示数据 类型
+                tags:[],// 下拉显示数据 标签
+                seasonings:[],// 下拉显示数据 调料
+                foodData: [],// 存储食谱食材
+                activeName: "0",//当前被选中的table的name
+                rules: {
+                    cName: [
+                        {required: true, message: '请填入名称', trigger: 'change'},
+                        {required: true,min: 2, max: 10, message: '长度在 2 到 10 个字符', trigger: 'blur'}
+                    ],
+                    cTypes: [
+                        {required: true, message: '请至少选择一种类型', trigger: 'change'}
+                    ],
+                    cPractice: [
+                        {required: true, message: '请填入具体做法', trigger: 'change'}
+                    ]
+                },// 表单验证属性
+                menu:[true,false,false]// 菜单显示
+            }
+        },
+        methods: {
+            toFixed:function (fieldNme) {
+                let value = this.form;
+                if(value && value[fieldNme]){
+                    return value[fieldNme].toFixed(2);
+                }else{
+                    return 0
+                }
+            },
+            // 新增原料
+            openPopWin: function(){
+                if(this.form.cPkId==null){
+                    this.$message({
+                        showClose: true,
+                        message: '请先点击【保存】',
+                        type: 'warning'
+                    });
+                    return false;
+                }else{
+                    console.log("openPopWin");
+                    utils.openPopWin("添加食材","./popMaterial.html?pkId="+this.form.cPkId,600,300);
+                }
+            },
+            addFood:function (obj) {
+              utils.post("/recipe/addFood",obj).then(res=>{
+                  if(res.data){
+                      if(res.data.recipe){
+                          this.form = res.data.recipe;
+                      }
+                      if(res.data.foods){
+                          this.foodData = res.data.foods;
+                      }
+                  }
+              })
+            },
+            // 编辑食材
+            editFood(){
+                var reg = new RegExp("^[0-9]*$");
+                if(!reg.test(this.currentFood.nWeight)){
+                    this.$message({
+                        message: "请输入数值类型",
+                        type: 'error',
+                        duration: 1000
+                    })
+                    return ;
+                }
+                utils.post("/recipe/editFood",{
+                    pkId:this.currentFood.cFoodId,
+                    weight:this.currentFood.nWeight,
+                    recipeId:this.form.cPkId
+                }).then(res=>{
+                    if(res.data){
+                        if(res.data.recipe){
+                            this.form = res.data.recipe;
+                        }
+                        if(res.data.foods){
+                            this.foodData = res.data.foods;
+                        }
+                    }
+                })
+                this.dialogFormVisible=false;
+            },
+            // 删除食材
+            deleteFood(foods){
+                let that = this;
+                this.$confirm('确定删除这个食材？').then(_ => {
+                    utils.post("/recipe/deleteFood",{pkId:foods.cPkId,recipeId:this.form.cPkId}).then(res=>{
+                        if(res.code=='1'){
+                            that.foodData.forEach((item,index)=> {
+                                if (item.cFoodNme == foods.cFoodNme) {
+                                    that.foodData.splice(index, 1);
+                                }
+                            });
+
+                            if(res.data){
+                                if(res.data.recipe){
+                                    this.form = res.data.recipe;
+                                }
+                                if(res.data.foods){
+                                    this.foodData = res.data.foods;
+                                }
+                            }
+
+                            that.$message({
+                                message: "删除成功",
+                                type: 'success',
+                                duration: 1000
+                            })
+                        }
+                    });
+                });
+            },
+            // 点击切换显示不同的dom
+            handleClick: function () {
+                for(let x=0;x<this.menu.length;x++){
+                    if(x==parseInt(this.activeName)){
+                        this.menu[x]=true;
+                    }else{
+                        this.menu[x]=false;
+                    }
+                }
+            },
+            // 格式化时间
+            formatDate: function (row, column, cellValue) {
+                let date = new Date(cellValue.time);
+                return date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+            },
+            // 保存数据
+            save: function () {
+                //如果不是显示的第一个tab页，那validate的校验不会生效，
+                //而且必须延迟一段时间，否则也不生效。。。
+                if(this.activeName!='0'){
+                    this.activeName="0";
+                    this.menu=[true,false,false];
+                    let that = this;
+                    setTimeout(function(){
+                        that.save_();
+                    },500)
+                }else{
+                    this.save_();
+                }
+
+            },
+            save_:function(){
+                let that=this;
+                this.$refs['form'].validate((valid) => {
+                    // 保存当前修改的数据
+                    if (valid){
+                        utils.post("/recipe/save", {
+                            'form': this.form,
+                            'foods':this.foodData
+                        }).then(res => {
+
+                            if (res.code == '1') {
+                                if(res.data && res.data.recipe){
+                                    this.form = res.data.recipe;
+                                    console.log(res.data.recipe.cPkId);
+                                }
+                                if(res.data && res.data.foods){
+                                    this.foodData = res.data.foods;
+                                }
+                                that.$message({
+                                    message: "保存成功",
+                                    type: 'success',
+                                    duration: 1000
+                                })
+                            } else {
+                                that.$message({
+                                    message: "系统繁忙",
+                                    type: 'error',
+                                    duration: 1000
+                                })
+                            }
+                        }, res => {
+                            that.$message({
+                                message: "系统繁忙",
+                                type: 'error',
+                                duration: 1000
+                            })
+                        });
+                    }
+                });
+            },
+            // 获取菜谱
+            detail: function () {
+                // 获取url
+                let pkId = utils.getParams("cPkId");
+                let obj={};
+                if(pkId!=""&&pkId!=null){
+                    obj.cPkId=pkId;
+                    let that = this;
+                    utils.post("/recipe/detail",obj).then(function (res) {
+                        console.log("食谱>>>>>>>>>>>", res.data.recipe);
+                        if(res.data.recipe!=undefined){
+                            //判断食谱的用户是否与当前服务器登录的用户相等，如果相等就显示操作按钮，如果不相等就隐藏操作按钮
+                            if(res.data.userId!=res.data.recipe.cUserId){
+                                that.isShow=false;
+                            }
+                            that.form = res.data.recipe;// 将数据给form去显示
+                            that.foodData = res.data.foods;
+                            that.form.cTypes=eval(that.form.cTypes==""?"[]":that.form.cTypes);// 将cTypes转为json数组
+                            //                    that.form.cSeasoning=eval(that.form.cSeasoning==""?"[]":that.form.cSeasoning);// 将cSeasoning转为json数组
+                            that.form.cTags=eval(that.form.cTags==""?"[]":that.form.cTags);// 将cTags转为json数组
+                        }
+                    }, function () {
+                        that.$message({
+                            message: "系统繁忙",
+                            type: 'error',
+                            duration: 1000
+                        })
+                    });
+                }else {
+                    obj.cPkId="";
+                }
+            },
+            // 获取食物种类
+            fetchFoodType:function(){
+                let that=this;
+                utils.post("/select/initCascader",{
+                    parentCodes:['02']
+                }).then(res=>{
+                    let datas = res.data['02'];
+                    this.types = datas;
+                });
+//
+//                let that=this;
+//                utils.post("/commCode/getTypes", {codes: ["02","03","04","05","06","07","08","09"]}).then(function (res) {
+//                    if (res.code == '1') {// 如果成功请求且code为1
+//                        console.log(res)
+//                        let parent = res.data.parent;
+//                        let son = res.data.son;
+//                        for (let x=0;x< parent.length;x++){// 循环最外层的父类
+//                            let obj = {
+//                                label:parent[x].cText,
+//                                options:[]
+//                            };// 设置分类的label
+//                            for(let y=0;y<son.length;y++){// 循环子类
+//                                if(son[y].length>0&&parent[x].cCode==son[y][0].cParentCode){// 如果子类的parencod与父类的code相等
+//                                    for(let j=0;j<son[y].length;j++){// 循环子类
+//                                        let sObj={
+//                                            value:son[y][j].cCode,
+//                                            label:son[y][j].cText
+//                                        }
+//                                        obj.options.push(sObj);
+//                                    }
+//                                }
+//                            }
+//                            that.types.push(obj);
+//                        }
+//                    }
+//                });
+            },
+        },
+        computed:{
+
+        },
+        mounted: function () {
+            // 获取所有的菜谱
+            this.detail();
+            // 获取食物种类
+            this.fetchFoodType();
+            utils.initSelect([{
+                code:'03',
+                type:'commCode',
+                model:this.tags
+            }]);
+        }
+    })
+
+</script>

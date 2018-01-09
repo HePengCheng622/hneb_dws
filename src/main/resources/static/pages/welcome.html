@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="../css/base.css"/>
+    <link rel="stylesheet" href="../css/iconfont.css"/>
+    <script src="../plugin/vue/vue.js"></script>
+    <script src="../plugin/element-ui/lib/index.js"></script>
+    <link rel="stylesheet" href="../plugin/element-ui/theme-chalk/index.css">
+    <style>
+		.clear{clear:both}
+		.explain{padding:30px 30px 0 30px;box-sizing: border-box;}
+		.explain .wel{font:bold 18px "微软雅黑";margin-bottom:20px}
+		.explain ul li{font-size:14px;line-height:22px;padding:10px 0;border-bottom:dashed 1px #2b7dbc}
+	</style>
+</head>
+
+<body style="background: url(../images/home-bg.jpg) no-repeat top right;">
+	<div id="app" class="explain">
+		<div class="wel">欢迎使用【儿童健康管理系统】为了使您更好的了解本系统，建议您仔细阅读如下内容：</div>
+		<ul>
+			<!--<li>1、您可以使用右上角的【全屏显示】使工作区域最大化，当您需要回到windows桌面的时候可以点击【退出全屏】</li>-->
+			<li>1、您可以通过右下角角的【修改密码】来变更您的登录密码</li>
+			<li>2、左侧区域是菜单栏，每个菜单点击后将在中间区域出现选项卡操作页面，选项卡点击X可进行关闭操作</li>
+			<li>3、为了节省资源保证系统流畅性，超过30分钟没有任何操作需要重新登录</li>
+			<li>4、如果您在使用的过程中有任何的疑问或者有更好的意见和建议可以通过右上角的【加入QQ群】在线反馈，您也可以<a target="_blank" href="http://mail.qq.com/cgi-bin/qm_share?t=qm_mailme&email=44uNhoGjhYybjoKKj82AjI4" style="text-decoration:none;"><img src="http://rescdn.qqmail.com/zh_CN/htmledition/images/function/qm_open/ico_mailme_01.png"/></a>，我们将尽快答复</li>
+			<!--<li>6、您可以点击左上角的【切换】在两个系统间任意切换</li>-->
+		</ul>
+	</div>
+</body>
+
+<script src="../js/utils.js"></script>
+<script>
+    var vue = new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                visible: false,
+            }
+        }
+    })
+</script>
+</html>

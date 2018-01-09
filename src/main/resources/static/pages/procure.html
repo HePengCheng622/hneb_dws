@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" href="../css/base.css"/>
+    <script src="../plugin/vue/vue.js"></script>
+    <script src="../plugin/element-ui/lib/index.js"></script>
+    <link rel="stylesheet" href="../plugin/element-ui/theme-chalk/index.css">
+    <style type="text/css">
+        .procureTit {
+            font-size: 30px;
+            text-align: center;
+            padding-top: 20px;
+            display: none;
+        }
+
+        .procureList {
+            font-size: 0;
+            padding: 10px 0;
+        }
+
+        .procureList li {
+            font-size: 14px;
+            color: #5a5e66;
+            line-height: 30px;
+            display: inline-block;
+        }
+
+        .procureList li em {
+            width: 80px;
+            font-style: normal;
+            display: inline-block;
+        }
+
+        .procureList li:nth-child(3n+1) {
+            width: 45%;
+        }
+
+        .procureList li:nth-child(3n+2) {
+            width: 25%;
+        }
+
+        .procureList li:nth-child(3n+3) {
+            width: 30%;
+            text-align: right;
+        }
+
+        .procureList li:nth-child(3n+3) em {
+            text-align: left;
+        }
+
+        @media print {
+            @page {
+                margin: 0.3cm 0.4cm
+            }
+
+            * {
+                color: #000;
+            }
+
+            .mainBox {
+                height: initial;
+            }
+
+            .procureTit {
+                display: block;
+            }
+
+            .layoutUi {
+                display: none;
+            }
+
+            .procureList li {
+                color: #333;
+            }
+
+            .procureList li:nth-child(3n+1) {
+                width: 42%;
+            }
+
+            .procureList li:nth-child(3n+2) {
+                width: 28%;
+            }
+
+            .procureList li:nth-child(3n+3) {
+                width: 30%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div id="app">
+    <div class="procureTit">2017-12-22食材清单</div>
+    <div class="mainBox height100">
+        <div class="layoutUi" style="border-bottom: solid 1px #DCDFE6;">
+            <el-form :inline="true">
+                <el-form-item>
+                    <el-date-picker v-model="tm" type="date" :default-value="new Date()" value-format="yyyy-MM-dd"
+                                    placeholder="选择日期"></el-date-picker>
+                </el-form-item>
+                <el-form-item>
+                    <el-select v-model="mealMrk" placeholder="请选择餐别" clearable>
+                        <el-option key="1" label="早餐" value="1"></el-option>
+                        <el-option key="2" label="早加餐" value="2"></el-option>
+                        <el-option key="3" label="午餐" value="3"></el-option>
+                        <el-option key="4" label="下午加餐" value="4"></el-option>
+                        <el-option key="5" label="晚餐" value="5"></el-option>
+                        <el-option key="6" label="晚加餐" value="6"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" plain @click="query">查询</el-button>
+                </el-form-item>
+            </el-form>
+            <div class="layoutUiRight">
+                <el-button type="primary" @click="printPage">打印食材</el-button>
+            </div>
+        </div>
+        <ul class="procureList">
+            <li v-for="item in foodList"><em>{{item.name}}</em>{{item.weight}}克</li>
+        </ul>
+    </div>
+</div>
+</body>
+<script src="../js/utils.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                tm: new Date(),
+                mealMrk: '',
+                foodList: []
+            }
+        },
+        methods: {
+            printPage(){
+                window.print();
+            },
+            query(){
+                // 再次查询前将数据至空
+                this.foodList = [];
+                utils.post("/procure/query", {
+                    eatTm: this.tm,
+                    mealMrk: this.mealMrk
+                }).then(res => {
+                    console.log(res);
+                    if (res.code == '1') {
+                        let data = res.data;
+                        for (let key in data) {
+                            let obj = {
+                                name: key,
+                                weight: data[key]
+                            };
+                            this.foodList.push(obj);
+                        }
+                        this.$message({
+                            message: "查询成功",
+                            type: 'success',
+                            duration: 900
+                        })
+                    } else {
+                        this.$message({
+                            message: "系统繁忙",
+                            type: 'error',
+                            duration: 900
+                        })
+                    }
+
+                })
+
+            }
+        },
+        mounted(){
+            // 一挂载就获取出数据
+            this.query();
+        }
+    })
+</script>
+</html>

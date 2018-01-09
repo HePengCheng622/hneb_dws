@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>基础数据管理</title>
+    <script src="../plugin/vue/vue.js"></script>
+    <script src="../plugin/element-ui/lib/index.js"></script>
+    <link rel="stylesheet" href="../plugin/element-ui/theme-chalk/index.css">
+</head>
+
+<body>
+<div id="app">
+    <div class="mainBox">
+        <el-tree
+                ref="tree1" :props="props" :load="loadNode" lazy=""
+                node-key="value" :render-content="renderContent">
+        </el-tree>
+        <!--是否确认删除节点-->
+        <el-dialog
+                title="提示"
+                :visible.sync="dialogVisible"
+                width="30%">
+            <span>将会删除该节点下的所有节点，是否继续？</span>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="dialogVisible = false">取 消</el-button>
+                <el-button type="primary" @click="dialogVisible = false;">确 定</el-button>
+            </span>
+        </el-dialog>
+    </div>
+</div>
+</body>
+
+
+<link rel="stylesheet" href="../css/base.css"/>
+<link rel="stylesheet" href="../css/iconfont.css"/>
+
+<script src="../js/utils.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                props: {
+                    label: 'text',
+                    children: 'children',
+                    value: 'value',
+                    isLeaf: 'isLeaf'
+                },
+                name:"",//用来保存需要添加的值
+                dialogFormVisible: false,
+                firstLoad:true,// 用于记录是否是第一次加载节点
+                dialogVisible:false,//是否显示对话框
+            }
+        },
+        methods: {
+            openInput(data) {
+                var that=this;
+                this.$prompt('请输入名称', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                }).then(({ value }) => {
+                    // 需要添加的子节点
+                    const newChild = {parent:data.data.value,value: "", text: value, children: [] };
+                    // 后台去保存
+                    utils.post("/commCode/addNode", newChild).then(function (res) {
+                    if (res.code == '1') {// 如果成功请求且code为1
+                        newChild.value=res.data.code.cCode;// 将后台生成的code赋值给前台的value
+                        if (!data.children) {
+                            that.$set(data, 'children', []);
+                        }
+                        let data1=[]
+                        data.childNodes.forEach(function (item,index) {
+                            data1.push({
+                                text:item.label,
+                                isLeaf: item.isLeaf,
+                                value: item.key,
+                                children:item.childNodes
+                            })
+                        })
+                        data1.push(newChild);
+                        that.$refs.tree1.updateKeyChildren(newChild.parent,data1);
+                    } else {
+                        that.$message({
+                            message: "系统繁忙",
+                            type: 'error',
+                            duration: 900
+                        })
+                    }
+                }, function (res) {
+                    that.$message({
+                        message: "系统繁忙",
+                        type: 'error',
+                        duration: 900
+                    })
+                });
+                })
+            },
+            // 添加节点
+            append:function(data) {
+                console.log(data.data.value);
+                this.openInput(data);// 打开信息录入框
+            },
+            // 删除字节点，如果子节点下面有节点，也会随着删除
+            remove:function(node, data) {
+                var that=this;
+                this.$confirm('将删除该节点下的所有节点，是否确认删除？')
+                    .then(function(){
+                        var parent = node.parent;
+                        var data1 = [];
+                        parent.childNodes.forEach(function (item,index) {
+                            if(item.key!=node.key){
+                                data1.push({
+                                    text:item.label,
+                                    isLeaf: item.isLeaf,
+                                    value: item.key,
+                                    children:item.childNodes
+                                })
+                            }
+                        })
+                        utils.post("/commCode/deleteNode", {code: node.key}).then(function (res) {
+                            if (res.code == '1') {// 如果成功请求且code为1
+
+                            } else {
+                                that.$message({
+                                    message: "系统繁忙",
+                                    type: 'error',
+                                    duration: 900
+                                })
+                            }
+                        }, function (res) {
+                            that.$message({
+                                message: "系统繁忙",
+                                type: 'error',
+                                duration: 900
+                            })
+                        });
+                        that.$refs.tree1.updateKeyChildren(parent.key,data1);
+                    },function(){});
+            },
+            // 渲染右边操作按钮
+            renderContent:function(h, obj) {
+                var that = this;
+                var obj=obj;
+                return h('span',{
+                                style:{'flex': 1, 'display': 'flex', 'align-items': 'center', 'justify-content': 'space-between', 'font-size': '14px', 'padding-right': '8px'}
+                            },[
+                                h('span',{},[
+                                    h('span',obj.node.label)
+                                ]),
+                                h('span',{},[
+                                    h('i',{
+                                        class:'el-icon-plus',
+                                        on:{
+                                            click:function(){that.append(obj.node,obj.data)}
+                                        }
+                                    }),
+                                    h('i',{
+                                        class:'el-icon-minus',
+                                        style:{
+                                          'margin-left':'10px'
+                                        },
+                                        on:{
+                                            click:function(){that.remove(obj.node,obj.data)}
+                                        }
+                                    })
+                                ])
+                            ]);
+            },
+
+            // 获取节点
+            loadNode:function(node, resolve) {
+                var that=this;
+                var code="";// 根据当前的code值查找出他的所有子节点
+                // 判断是否是第一次加载，如果是第一次加载就是root
+                if (this.firstLoad) {
+                    code="root";
+                    this.firstLoad=false;
+                }else{
+                    code=node.key;
+                }
+                utils.post("/commCode/getNode", {code: code}).then(function (res) {
+                    if (res.code == '1') {// 如果成功请求且code为1
+                        var data=[];// 需要添加的数据
+                        console.log(res)
+                        // 如果res.data.resultList 不等于null长度也不为0的话，就将它的数据遍历出来
+                        for (var i = 0; res.data.resultList != null && i < res.data.resultList.length; i++) {
+                            var obj = {
+                                text: res.data.resultList[i].label,
+                                value: res.data.resultList[i].value
+                            };
+                            if(parseInt(res.data.resultList[i].children)==0){
+                                obj.isLeaf=true;
+                            }else{
+                                obj.isLeaf=false;
+                            }
+                            if(res.data.resultList[i].mrk=="Y")
+                                data.push(obj);// 将每一条数据添加到data中
+
+                        }
+                        resolve(data);
+                    } else {
+                        that.$message({
+                            message: res.msg,
+                            type: 'error',
+                            duration: 900
+                        })
+                    }
+                }, function (res) {
+                    that.$message({
+                        message: res.msg,
+                        type: 'error',
+                        duration: 900
+                    })
+                });
+            },
+        }
+    })
+</script>
+</html>

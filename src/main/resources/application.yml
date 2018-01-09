@@ -1,0 +1,26 @@
+spring:
+  profiles:
+    active: dev
+  resources:
+    static-locations: classpath:/resources/,classpath:/static/,classpath:/templates/
+  datasource:
+    tomcat:
+      initial-size: 2
+      max-idle: 5
+      max-active: 2
+
+server:
+  tomcat:
+    access_log_enabled: true
+    basedir: target/tomcat
+    uri-encoding: UTF-8
+  session:
+    timeout: 1800
+  context-path: /
+
+fwk:
+  springSecuriy:
+    usersByUsernameQuery: select c_user_id as userId,c_user_nme as userNme,c_password as password,c_phone_no as phoneNo,(select c_dpt_id from t_doctor_auth b where a.c_user_id=b.c_user_id) as dptId,(select c_office_id from t_doctor_auth b where a.c_user_id=b.c_user_id) as officeId from t_user a where c_phone_no=? and c_role='1'
+    authoritiesByUsernameQuery: select c_role as role from t_user b where b.c_phone_no=? and b.c_role='1'
+  welcome_file: /pages/index.html
+

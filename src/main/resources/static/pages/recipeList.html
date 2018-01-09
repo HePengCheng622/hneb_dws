@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../css/base.css"/>
+    <script src="../plugin/vue/vue.js"></script>
+    <script src="../plugin/element-ui/lib/index.js"></script>
+    <link rel="stylesheet" href="../plugin/element-ui/theme-chalk/index.css">
+</head>
+<body>
+<div id="app">
+    <div class="mainBox height100">
+        <div class="layoutUi">
+            <el-form :inline="true">
+                <el-form-item>
+                    <el-select v-model="form.cMrk" placeholder="请选择创建人" style="width: 140px;">
+                        <el-option key="0" label="所有" value="0"></el-option>
+                        <el-option key="1" label="系统创建菜品" value="1"></el-option>
+                        <el-option key="2" label="我创建的菜品" value="2"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item>
+                    <el-input v-model="form.cName" placeholder="请输入菜品名称" @change="changeCount"></el-input>
+                </el-form-item>
+                <el-form-item>
+                    <el-select v-model="form.cTypes" multiple placeholder="请选择类型" style="width: 100%;">
+                        <el-option-group v-for="group in types" :key="group.label" :label="group.label">
+                            <el-option v-for="item in group.children" :key="item.value" :label="item.label" :value="item.value">
+                            </el-option>
+                        </el-option-group>
+                    </el-select>
+                </el-form-item>
+                <el-form-item>
+                    <el-select v-model="form.cTags" multiple placeholder="请选择标签">
+                        <el-option v-for="item in tags" :key="item.value" :label="item.label"
+                                   :value="item.value"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" plain @click="query">查询</el-button>
+					<el-button type="primary" plain @click="rest">重置</el-button>
+                </el-form-item>
+            </el-form>
+            <div class="layoutUiRight">
+            	<el-button type="primary" v-if="!isShow" @click="addRecipe">添加</el-button>
+            </div>
+            
+        </div>
+        <el-table :data="tableData.resultList" borderstyle="width: 100%" :height="tableHeight">
+            <!--数据区域-->
+            <el-table-column prop="C_PK_ID" label="ID" v-if="false"></el-table-column>
+            <el-table-column fixed prop="C_NAME" label="名称" width="120"></el-table-column>
+            <el-table-column fixed prop="C_USER_NME" label="创建人" width="120"></el-table-column>
+            <!--<el-table-column prop="C_TYPES" label="类型" :formatter="formatArr"  width="90"></el-table-column>-->
+            <!--<el-table-column prop="C_TAGS" label="标签" :formatter="formatArr"  width="90"></el-table-column>-->
+            <!--<el-table-column prop="C_SEASONING" label="调料" width="90"></el-table-column>-->
+            <!--<el-table-column prop="C_FEATURES" label="特性" width="90"></el-table-column>-->
+            <!--<el-table-column prop="C_MATTER" label="事项" width="90"></el-table-column>-->
+            <el-table-column prop="N_WEIGHT" label="重量" width="90"></el-table-column>
+            <el-table-column prop="N_WATER" label="水分" width="90"></el-table-column>
+            <el-table-column prop="N_ENERGY_1" label="能量KCAL" width="90"></el-table-column>
+            <el-table-column prop="N_ENERGY_2" label="能量KJ" width="90"></el-table-column>
+            <el-table-column prop="N_PROTEIN" label="蛋白质" width="90"></el-table-column>
+            <el-table-column prop="N_FAT" label="脂肪" width="90"></el-table-column>
+            <el-table-column prop="N_CHO" label="碳水化合物" width="90"></el-table-column>
+            <el-table-column prop="N_DIETARY_FIBER" label="不溶性纤维" width="90"></el-table-column>
+            <el-table-column prop="N_CHOLESTEROL" label="胆固醇" width="90"></el-table-column>
+            <el-table-column prop="N_ASH" label="灰分" width="90"></el-table-column>
+            <el-table-column prop="N_VA" label="维他命A" width="90"></el-table-column>
+            <el-table-column prop="N_CAROTENE" label="胡萝卜素" width="90"></el-table-column>
+            <el-table-column prop="N_RETINOL" label="视黄醇" width="90"></el-table-column>
+            <el-table-column prop="N_THIAMIN" label="硫胺素" width="90"></el-table-column>
+            <el-table-column prop="N_RIBOFLAVIN" label="核黄素" width="90"></el-table-column>
+            <el-table-column prop="N_NIACIN" label="尼克酸" width="90"></el-table-column>
+            <el-table-column prop="N_VC" label="维他命C" width="90"></el-table-column>
+            <el-table-column prop="N_VE_TOTAL" label="维生素E" width="90"></el-table-column>
+            <el-table-column prop="N_CA" label="钙" width="90"></el-table-column>
+            <el-table-column prop="N_P" label="磷" width="90"></el-table-column>
+            <el-table-column prop="N_K" label="钾" width="90"></el-table-column>
+            <el-table-column prop="N_NA" label="钠" width="90"></el-table-column>
+            <el-table-column prop="N_MG" label="镁" width="90"></el-table-column>
+            <el-table-column prop="N_FE" label="铁" width="90"></el-table-column>
+            <el-table-column prop="N_ZN" label="锌" width="90"></el-table-column>
+            <el-table-column prop="N_SE" label="硒" width="90"></el-table-column>
+            <el-table-column prop="N_CU" label="铜" width="90"></el-table-column>
+            <el-table-column prop="N_MN" label="锰" width="90"></el-table-column>
+            <!--<el-table-column prop="N_GI" label="GI" width="90"></el-table-column>-->
+            <!--<el-table-column prop="N_SALT" label="盐" width="90"></el-table-column>-->
+            <!--<el-table-column prop="N_SUGAR" label="糖" width="90"></el-table-column>-->
+            <!--操作区域-->
+            <el-table-column fixed="right" label="操作" width="170">
+                <template slot-scope="scope">
+                    <el-button v-if="!isShow" @click="edit(scope.row)" type="text" size="small">查看/编辑</el-button>
+                    <el-button v-if="!isShow" @click="copy(scope.row)" type="text" size="small">副本</el-button>
+                    <el-button v-if="!isShow"  @click="deleteRow(scope.row)" type="text" size="small">删除</el-button>
+                    <el-button v-if="isShow" type="primary" size="small" @click="selectOne(scope.row)" plain >确定</el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+        <el-pagination :current-page="form._pageNum" :page-sizes="[10,20, 50, 100]" :page-size="form._pageSize"
+                       @current-change="handleCurrentChange"
+                       @size-change="handleSizeChange"
+                       layout="total, sizes, prev, pager, next, jumper" :total="tableData.total">
+        </el-pagination>
+    </div>
+</div>
+</body>
+</html>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.13.1/lodash.min.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+    var vm=new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                tableData: [],
+                isShow:false,
+                mealMark:0,
+                weekDay:"",
+                form: {//表单上数据
+                    cMrk:'0',
+                    cTags:[],// 标签
+                    cTypes:[],//类型
+                    cName:"",// 食物名称
+                    _count: true,// 是否进行统计
+                    _pageNum: 1,// 当前页面
+                    _pageSize: 10,// 当前页面数据条数
+                    _total: 0,//总数
+                },
+                tableHeight:0,
+                types: [],// 下拉显示数据 类型
+                tags:[]// 标签
+            }
+        },
+        methods: {
+            addRecipe:function(){
+                //window.location.href="./recipe.html";
+                window.open("/pages/recipe.html")
+            },
+            rest:function(){
+              	this.form.typeValue=[];
+                this.form.cName="";
+                this.form._count=true;// 将count为true，重新去统计
+			},
+            // 格式化数组
+            formatArr:function(row, column, cellValue){
+                let showStr="";
+                let values = eval(cellValue);//将字符串装成json数组
+                if(cellValue==row.C_TYPES){// type
+                    for(let i=0;i<this.types.length;i++){//循环组拼需要显示的字符串
+                        let options = this.types[i].options;// 拿出需要遍历对比的数组
+                        for(let y=0;y<options.length;y++){// 遍历数组
+                            for (let key in values){
+                                if(values[key]==options[y].value){// 如果传进来的值与options的value想等就将它显示
+                                    showStr=showStr+","+options[y].label;
+                                }
+                            }
+                        }
+                    }
+                }else{// tags
+                    for(let key in values){
+                        for(let i=0;i<this.tags.length;i++){
+                            if(values[key]==this.tags[i].value){
+                                showStr=showStr+","+this.tags[i].label;
+                            }
+                        }
+                    }
+                }
+                return showStr.substring(1);
+            },
+            // 点击确定后获取菜品，并将他传给父页面
+            selectOne(data){
+                console.log(data);
+                // 将当前的数据设置到对应的table数据中
+                let obj=data;
+                obj['C_MEAL_MRK']=this.mealMark;
+                parent.vm.addRecipe(obj);
+                parent.utils.closePopWin();
+            },
+            // 点击条目事件
+            edit: function (row) {
+                // 打开食谱详情页面
+                window.location.href="./recipe.html?cPkId="+row.C_PK_ID;
+            },
+            deleteRow: function (row) {
+                let __ = _;
+                this.$confirm('确定删除菜品【'+row.C_NAME+'】？').then(_ => {
+                    utils.post("/recipe/delete",{
+                        pkId:row.C_PK_ID,
+                        userId:row.C_USER_ID
+                    }).then(res=>{console.log(res);
+                        if(res.code==1){
+                            this.$message({
+                                message: res.msg,
+                                type: 'success',
+                                duration: 900
+                            });
+                            let index =__.findIndex(this.tableData.resultList, function(item) {
+                                return item.C_PK_ID == row.C_PK_ID;
+                            });
+                            this.tableData.resultList.splice(index,1);
+                        }else{
+                            this.$message({
+                                message: res.msg,
+                                type: 'error',
+                                duration: 900
+                            });
+                        }
+
+                    });
+                });
+            },
+            // 副本
+            copy: function (row) {
+                let __ = _;
+                this.$confirm('是否创建菜品【'+row.C_NAME+'】的副本？').then(_ => {
+                    utils.post("/recipe/copy",{
+                        pkId:row.C_PK_ID,
+                        name:row.C_NAME
+                    }).then(res=>{
+                        if(res.code==1){
+                            this.$message({
+                                message: "操作成功",
+                                type: 'success',
+                                duration: 900
+                            });
+
+                            let newRow = __.cloneDeep(row);
+                            newRow.C_PK_ID=res.data.pkId;
+                            newRow.C_NAME = res.data.name;
+                            newRow.C_USER_ID="";//因为不知道当前人员id，故前台给空，后台copy的时候数据库是当前人员id。主要用户copy后直接删除（没有经过查询）无法判断该数据是谁创建的
+
+                            let index =__.findIndex(this.tableData.resultList, function(item) {
+                                return item.C_PK_ID == row.C_PK_ID;
+                            });
+                            this.tableData.resultList.splice(index+1,0,newRow);
+                        }
+                    });
+                });
+
+            },
+            /*获取食物*/
+            query: function () {
+                this.form._total = this.tableData.total;
+                var that = this;
+                utils.post("/recipe/query", this.form).then(function (res) {
+                    if (res.code == '1') {// 如果成功请求且code为1
+                        // 将数据赋值给tablatData
+                        that.tableData = res.data;
+                        that.$message({
+                            message: res.msg,
+                            type: 'success',
+                            duration: 900
+                        })
+                    } else {
+                        that.$message({
+                            message: res.msg,
+                            type: 'error',
+                            duration: 900
+                        })
+                    }
+
+                }, function (res) {
+                    that.$message({
+                        message: res.msg,
+                        type: 'error',
+                        duration: 900
+                    })
+                });
+                this.form._count = false;// 每次请求完至为false
+            },
+            // 当显示页面条数发生改变
+            handleSizeChange: function (val) {
+                this.form._pageSize = val;
+                this.query();
+            },
+            // 当当前页面发生改变
+            handleCurrentChange: function (val) {
+                this.form._pageNum = val;
+                this.query();
+            },
+            // 当搜索的食物名发生改变
+            changeCount:function(){
+                this.form._count=true;// 将count为true，重新去统计
+            },
+            // 获取食物种类
+            fetchFoodType:function(){
+                let that=this;
+                utils.post("/select/initCascader",{
+                    parentCodes:['02']
+                }).then(res=>{
+                    let datas = res.data['02'];
+                    this.types = datas;
+                });
+            }
+        },
+        mounted: function () {
+            //动态设置table的高度
+            let layoutUiHeight = document.getElementsByClassName("layoutUi")[0].clientHeight;
+            let pagination = document.getElementsByClassName("el-pagination")[0].clientHeight;
+            let mainHeight = document.getElementsByClassName("mainBox")[0].clientHeight
+            this.tableHeight = mainHeight-layoutUiHeight-pagination-40;
+            // 初始化菜类型
+            this.fetchFoodType();
+            utils.initSelect([{
+                code:'03',
+                type:'commCode',
+                model:this.tags
+            }]);
+            setTimeout(()=>{
+                this.query();
+            },1);
+            // 判断是否是从carte过来？是的话隐藏编辑和查看按钮，并改为确定
+            this.isShow=utils.getParams("select");// 获取来源
+            this.mealMark=utils.getParams("mealMark");// 获取对应的餐别数据
+            this.weekDay=utils.getParams("week");// 获取添加在一天的数据
+        }
+    });
+</script>

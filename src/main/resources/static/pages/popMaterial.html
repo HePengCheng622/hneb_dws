@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<link rel="stylesheet" href="../css/base.css" />
+		<script src="../plugin/vue/vue.js"></script>
+		<script src="../plugin/element-ui/lib/index.js"></script>
+		<link rel="stylesheet" href="../plugin/element-ui/theme-chalk/index.css">
+	</head>
+	
+	<body>
+		<div id="app">
+			<div class="mainBox">
+				<el-tabs v-model="activeName">
+					<el-tab-pane label="按名称" name="1" >
+						<el-form label-width="100px">
+							<el-col :span="24">
+								<el-form-item label="原材料名称：">
+			                        <el-select filterable
+											   remote
+											   reserve-keyword
+											   default-first-option
+											   placeholder="请输入要搜索的原材料名称关键词"
+											   :remote-method="remoteMethod"
+											   @change="choose"
+											   	v-model="foodName1"
+											    style="width: 100%;">
+										<el-option
+												v-for="item in options"
+												:key="item.value"
+												:label="item.label"
+												:value="item.value">
+										</el-option>
+									</el-select>
+			                    </el-form-item>
+							</el-col>
+							<el-col :span="24">
+								<el-form-item label="原材料重量：">
+									<el-input v-model="foodWeight1">
+										<template slot="append">克</template>
+									</el-input>
+								</el-form-item>
+							</el-col>
+							<el-col :span="24" style="text-align: center;">
+								<el-button type="primary" size="small" @click="submit">确定</el-button>
+							</el-col>
+						</el-form>
+					</el-tab-pane >
+					<el-tab-pane label="按类型" name="2">
+						<el-form label-width="100px">
+							<el-col :span="24">
+								<el-form-item label="原材料类型：">
+									<el-cascader
+											style="width: 100%;"
+											:options="foodOptions"
+											:props="props"
+											@change="selectOne"
+											@active-item-change="handleChange">
+									</el-cascader>
+			                    </el-form-item>
+							</el-col>
+							<el-col :span="24">
+								<el-form-item label="原材料重量：">
+									<el-input v-model="foodWeight2">
+										<template slot="append">克</template>
+									</el-input>
+								</el-form-item>
+							</el-col>
+							<el-col :span="24" style="text-align: center;">
+								<el-button type="primary" size="small" @click="submit">确定</el-button>
+							</el-col>
+						</el-form>
+					</el-tab-pane>
+				</el-tabs>
+			</div>
+		</div>
+	</body>
+	<script src="../js/utils.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/lodash@4.13.1/lodash.min.js"></script>
+	<script>
+		new Vue({
+			el: '#app',
+			data: function() {
+				return {
+                    activeName:"1",// 需要激活的tab
+                    options:[],// 远程搜索返回来的结果
+                    foodOptions:[],//食物类型（cascader的options参数）
+                    props: {
+                        value: 'value',
+						label:'label',
+                        children: 'children'
+                    },
+					foodPkId1:"",
+					foodName1:"",
+					foodWeight1:0,
+                    foodPkId2:"",
+					foodName2:"",
+					foodWeight2:0,
+				}
+			},
+			methods:{
+			    // 按名字查找的点击事件
+                choose(pkId){
+					for(let x=0;x<this.options.length;x++){
+						if(this.options[x].value==pkId){
+                            this.foodName1=this.options[x].label;
+                            this.foodPkId1=this.options[x].value;
+						}
+					}
+				},
+				// 选择一个食材
+                selectOne(data){
+					this.foodOptions.forEach(item=>{
+						if(item.value==data[0]){
+						    item.children.forEach(i=>{
+						        if(i.value==data[1]){
+						            i.children.forEach(j=>{
+						                if(j.value==data[2]){
+                                            this.foodPkId2=j.value;
+                                            this.foodName2=j.label;
+										}
+									})
+
+								}
+							});
+						}
+					});
+				},
+				// 按类别查找的点击事件,查找对应子类数据
+                handleChange(data){
+                    this.getFoodCascader(data[data.length-1]);
+				},
+				// 远程搜索
+                remoteMethod:_.debounce
+				(
+					function (query) {
+					    if(query==''){
+					        return false;
+						}
+						utils.post('/food/search',{
+							key:query
+						}).then(res=>{
+							this.options=res.data;
+						})
+					},
+					// 这是我们为判定用户停止输入等待的毫秒数
+					500
+				),
+				// 确认
+                submit(){
+                    // 判断是否为数值类型
+                    var reg = new RegExp("^[0-9]*$");
+                    if(!reg.test(this.foodWeight1)||!reg.test(this.foodWeight2)){
+                        this.$message({
+                            message: "请输入数值类型",
+                            type: 'error',
+                            duration: 1000
+                        })
+                        return ;
+                    }
+                    let recipeFood={
+                        cFoodId:"",
+                        nWeight:"",
+                        cFoodNme:"",
+						cRecipeId:utils.getRequest()['pkId']
+					};
+                    if(this.activeName=="1"){
+                        recipeFood.cFoodId=this.foodPkId1;
+                        recipeFood.nWeight=this.foodWeight1;
+                        recipeFood.cFoodNme=this.foodName1;
+					}else{
+                        recipeFood.cFoodId=this.foodPkId2;
+                        recipeFood.nWeight=this.foodWeight2;
+                        recipeFood.cFoodNme=this.foodName2;
+					}
+					let foodData=parent.vm.foodData;
+                    let flag=true;
+					for(let i=0;i<foodData.length;i++){
+						for(let key in foodData[i]){
+							if(foodData[i][key]==recipeFood.cFoodNme){// 判断是否已经存在同样的食材，有的话就更新重量
+								if(foodData[i].nWeight!=recipeFood.nWeight){// 如果重量不想等则将现在的覆盖以前的，并重新计算营养成分
+                                    foodData[i].nWeight=recipeFood.nWeight;
+                                    parent.vm.calculateNutrition();// 计算营养成分
+								}
+						        flag=false;
+							}
+						}
+					}
+					if(flag){// 如果没有重复的就添加进去
+//                        parent.vm.foodData.push(recipeFood);// 将数据设置到父数据容器中
+//						parent.vm.calculateNutrition();// 计算营养成分
+						parent.vm.addFood(recipeFood);
+					}
+                    parent.utils.closePopWin();// 关闭窗口
+				},
+				// 初始化类型下拉
+				initTypeCascader(){
+                    let that=this;
+                    // 初始化类型下拉列表
+					utils.post("/food/getFoodWithType",{typeName:"type"}).then(res=>{
+						if(res.code=='1'){
+							// 将所有的数据push到foodOptions中
+							res.data.forEach(item=>{
+                                let obj={};
+								obj.value=item;
+								obj.label=item;
+								obj.children=[];
+								that.foodOptions.push(obj);
+							});
+						}
+					});
+				},
+				addFoodOptions:function(jsonObj,matchedKey,returnKey,value,childrenNme,datas){
+//                    return _.result(_.find(jsonObj, tmp=> {
+//                        if(tmp[matchedKey]==value){
+//                            return tmp[returnKey];
+//						}
+//						if(tmp[childrenNme] && tmp[childrenNme].length>0){
+//                            return this.find(tmp[childrenNme],matchedKey,returnKey,value,childrenNme);
+//						}
+//                    }), returnKey);
+					for(let i=0;i<jsonObj.length;i++){
+						let item = jsonObj[i];
+						if(item[matchedKey]==value){
+						    datas.forEach((ele,index)=>{
+						        item[returnKey].push(ele);
+							})
+						}
+						else if(item[childrenNme]&&item[childrenNme].length!=0){
+							this.addFoodOptions(item[childrenNme],matchedKey,returnKey,value,childrenNme,datas);
+						}
+					}
+				},
+				getFoodCascader:function(value){
+					utils.post("/select/foodsCascader",{
+					    key:value
+					}).then(res=>{
+						if(value=='01'){
+						    this.foodOptions = res.data;
+						}else if(value.length==4||value.length==6){
+							this.addFoodOptions(this.foodOptions,"value","children",value,"children",res.data);
+						}
+					});
+				}
+			},
+			mounted:function(){
+			    // 初始化类别下拉
+                this.getFoodCascader("01");
+			}
+		})
+  </script>
+</html>

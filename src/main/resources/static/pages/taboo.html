@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>食物禁忌</title>
+    <link rel="stylesheet" href="../css/base.css"/>
+    <style>
+    	.taboo{width:526px;display: inline-block;padding:0 15px 10px 15px;box-sizing: border-box;}
+    	.taboo .tips{background: #fdf5e6;font-size:13px;color: #eb9e05;padding: 8px 16px;box-sizing: border-box;position: absolute;left: 0;right: 0;bottom: 0;}
+        .transfer-footer {
+            margin-left: 20px;
+            padding: 6px 5px;
+        }
+    </style>
+
+    <script src="../plugin/vue/vue.js"></script>
+    <script src="../plugin/element-ui/lib/index.js"></script>
+    <link rel="stylesheet" href="../plugin/element-ui/theme-chalk/index.css">
+</head>
+
+<body>
+<div id="app">
+	<div class="taboo">
+		<el-form :model="formData" :rules="rules" ref="formData">
+			<el-form-item label="禁忌名称" prop="cTaboo">
+				<el-input v-model="formData.cTaboo"></el-input>
+			</el-form-item>
+			<el-transfer
+					v-model="formData.cFoods"
+					filterable
+					:left-default-checked="[]"
+					:right-default-checked="[]"
+					:render-content="renderFunc"
+					:titles="['所有食材', '禁忌食材']"
+					:filter-method="filterMethod"
+					:format="{
+					  noChecked: '${total}',
+					  hasChecked: '${checked}/${total}'
+					}"
+						:props="{
+					  key: 'value',
+					  label: 'label'
+					}"
+					@change="handleChange"
+					:data="foodList">
+				<el-cascader clearable slot="left-footer" size="small" style="width: initial" :show-all-levels="false" change-on-select :options="foodTypeOptions" v-model="foodType"></el-cascader>
+				<!--<el-button class="transfer-footer" slot="left-footer" size="small" v-on:click="screening">筛选</el-button>-->
+				<el-button class="transfer-footer" type="primary" slot="right-footer" size="small" v-on:click="save" style="margin-left: 10px;padding: 8px 10px;">保存</el-button>
+			</el-transfer>
+			<p class="tips">{{searchTips}}</p>
+		</el-form>
+	</div>
+
+	<!--<div class="taboo">
+		<el-row style="padding: 15px 0;">
+			<el-col :span="4">
+				<div class="el-form-item__label" style="padding: 0;">禁忌名称：</div>
+			</el-col>
+			<el-col :span="20">
+				<el-input v-model="taboo" :rules="rules" placeholder="请输入内容"></el-input>
+			</el-col>
+		</el-row>
+	    <el-transfer
+	            v-model="foods"
+	            filterable
+	            :left-default-checked="[]"
+	            :right-default-checked="[]"
+	            :render-content="renderFunc"
+	            :titles="['所有食材', '禁忌食材']"
+	            :format="{
+	              noChecked: '${total}',
+	              hasChecked: '${checked}/${total}'
+	            }"
+	            :props="{
+	              key: 'value',
+	              label: 'label'
+	            }"
+	            @change="handleChange"
+	            :data="foodList">
+	        <el-cascader clearable slot="left-footer" size="small" :show-all-levels="false" style="width:140px" change-on-select :options="foodTypeOptions" v-model="foodType"></el-cascader>
+	        <el-button class="transfer-footer" slot="left-footer" size="small" v-on:click="screening">筛选</el-button>
+	        <el-button class="transfer-footer" type="primary" slot="right-footer" size="small" v-on:click="save">保存</el-button>
+	    </el-transfer>
+   </div>-->
+</div>
+</body>
+</html>
+<script src="../js/utils.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                formData:{
+                    cPkId:'',
+                    cTaboo:'',
+                    cFoods: [],//禁忌食物
+                    cCrtId:'',
+                    tCrtTm:null,
+				},
+
+                foodTypeOptions:[],//食物类型（cascader的options参数）
+                foodType:[],// 食物类型（过滤条件）
+                foodList: [],//所有食物
+                searchTips:"",//搜索提示
+
+                rules: {
+                    cTaboo: [
+                        { required: true, message: '请输入禁忌名称', trigger: 'blur' },
+                        { min: 1, max: 25, message: '长度在 1 到 25 个字符', trigger: 'blur' }
+                    ]
+                }
+            };
+        },
+        methods: {
+            renderFunc(h, option) {
+                return h("span",option.label);
+            },
+            handleChange(value, direction, movedKeys) {
+                console.log(value, direction, movedKeys);
+            },
+            filterMethod(query, item){
+                return item.label.indexOf(query) > -1||item.value.indexOf(query) > -1;
+			},
+            save(){
+                this.$refs['formData'].validate((valid) => {
+                    if (valid) {
+                        if(this.formData.cFoods.length==0){
+                            this.$message({
+                                message: '禁忌食材不能为空',
+                                type: 'error',
+                                duration: 1000
+                            });
+                            return false;
+                        }
+                        utils.post("/taboo/save",this.formData).then(res=>{
+                            this.$message({
+                                message: '保存成功',
+                                type: 'success',
+                                duration: 1000
+                            });
+                            setTimeout(function () {
+                                parent.vm.query();
+								parent.utils.closePopWin();
+                            },1000);
+                        })
+                    } else {
+                        return false;
+                    }
+                });
+            }
+        },
+        watch:{
+            foodType:function(newVal){
+				let tmp = newVal[newVal.length-1];
+				let key="cfc-";
+				if(tmp.length==0){
+                    this.searchTips ="";
+				    return;
+				}
+				if(tmp.length==4){
+					key = key+tmp.substring(2,4);
+				}
+                if(tmp.length==6){
+                    key = key+tmp.substring(2,4)+"-"+parseInt(tmp.substring(4,6));
+                }
+				this.searchTips = "请在所有食材搜索框中输入条件【"+key+"】搜索";
+            }
+        },
+        mounted:function(){
+            let params = utils.getRequest();
+            utils.initCascader([{
+                model:this.foodTypeOptions,
+                code:'01'
+            }]);
+            if(params['pkId']){
+                this.pkId = params['pkId'];
+                utils.post("/taboo/get",{
+                    'pkId':params['pkId']
+                }).then(res=>{
+                    let tmp = res.data.cFoods;
+                    tmp = tmp.substring(1,tmp.length-1);
+                    tmp = tmp.replace(/"/g,'');;
+                    this.taboo = res.data.cTaboo;
+                    this.pkId = res.data.cPkId;
+                    this.formData = res.data;
+                    this.formData.cFoods = tmp.split(",");
+                });
+            }
+
+            utils.post("/food/listAll",{}).then(res=>{
+                console.log(res.data)
+                this.foodList=res.data;
+            });
+        }
+    })
+</script>

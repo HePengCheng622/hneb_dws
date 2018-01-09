@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<link rel="stylesheet" href="../css/base.css" />
+		<link rel="stylesheet" href="../css/iconfont.css" />
+		<script src="../plugin/vue/vue.js"></script>
+		<script src="../plugin/element-ui/lib/index.js"></script>
+		<link rel="stylesheet" href="../plugin/element-ui/theme-chalk/index.css">
+		<style type="text/css">
+			.foodTabooHelp{font-size:20px;color: #409EFF;position: relative;top: 2px;cursor: pointer;}
+			.carte{display: flex;display: -webkit-flex;}
+			.carteLeft{flex: 1;-webkit-flex: 1;position: relative;}
+			.carteLeft .el-button{position: absolute;top: 4px;right: 0;z-index: 9;}
+			.carteRight{width: 320px;margin-left: 30px;}
+			.carteRight .nutrient{padding: 5px 0;}
+			.carteRight .nutrient label{font-size:14px;color: #5a5e66;text-align: right;padding-right: 10px;}
+			.carteRight .nutrient .progressBar{width: 100%;height: 8px;background: #f39c12;border-radius: 4px;position: relative;top: 6px;}
+			.carteRight .colorStyle{text-align: center;padding-top: 20px;}
+			.carteRight .colorStyle .el-tag{color: #fff;line-height: 24px;border:none;border-radius: initial;margin: 0 6px;}
+			.mealRadio{width: 100%;padding-left: 30px;}
+			.mealRadio .el-radio{width: 33.33333%;margin-left: 0;padding: 10px 0;}
+			.tableUi .operation{color:#409EFF;cursor: pointer;display: inline-block;}
+			.tableUi .operation:first-child{margin-right: 10px;}
+			.nutrientTable h4{font-size:14px;color: #409eff;padding: 5px 0 0 0;}
+			.nutrientTable table{width: 100%;color: #303133;border-collapse:collapse;text-align: left;table-layout:fixed;}
+			.nutrientTable table thead{font-size:14px;font-weight: bold;}
+			.nutrientTable table thead tr th{padding: 8px 0 4px 0;}
+			.nutrientTable table tbody{font-size:14px;}
+			.nutrientTable table tbody tr{height: 25px;color: #5a5e66;}
+			.nutrientTable table tbody tr td i{font-size:20px;font-weight: bold;}
+			.nutrientTable table tbody tr td i.dwsicon-downArrow{color: #67C23A;}
+			.nutrientTable table tbody tr td i.dwsicon-upArrow{color: #F56C6C;}
+			.nutrientTable table tbody tr td span{position: relative;top: -2px;}
+			.nutrientTable table tbody tr td{word-break:keep-all;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+			/*修改el-notification样式*/
+			.el-notification{background: #a8a8a8;color: #fff;}
+			.el-notification .el-notification__title{color: #fff;}
+			.el-notification .el-notification__closeBtn{color: #fff;}
+			.el-notification .el-icon-warning{color: #fff;}
+			.el-notification .el-notification__content{color: #fff;}
+		</style>
+	</head>
+
+	<body>
+		<div id="app">
+			<div class="mainBox">
+				<div class="layoutUi">
+					<el-tabs v-model="menuOneName" @tab-click="menuOneClick">
+			            <el-tab-pane label="基本信息" name="0"></el-tab-pane>
+			            <el-tab-pane label="餐单" name="1"></el-tab-pane>
+			        </el-tabs>
+			        <div class="layoutUiRight">
+			        	<el-button type="primary" size="small" icon="el-icon-check" @click="save()">保存</el-button>
+			        	<el-button type="info" size="small" icon="el-icon-message" @click="send()">餐单发送给家长</el-button>
+			        </div>
+		       </div>
+		        <el-form ref="formCarte" :model="formCarte" :rules="carteRules" label-width="115px">
+		        	<!--基本信息-->
+		        	<el-row :gutter="20" style="margin:0" v-if="menuOne[0]">
+		               <el-col :span="12">
+		                    <el-form-item label="姓名" prop="cChildNme">
+		                        <el-input placeholder="请输入名称" v-model="formCarte.cChildNme"></el-input>
+		                    </el-form-item>
+		                </el-col>
+		                <el-col :span="12">
+		                    <el-form-item label="出生日期" prop="tBirthday">
+		                        <el-date-picker v-model="formCarte.tBirthday" value-format="yyyy-MM-dd" :picker-options="{firstDayOfWeek:1,disabledDate:function(time) {return time.getTime() > Date.now();}}" type="date" placeholder="选择日期" style="width: 100%;"></el-date-picker>
+		                    </el-form-item>
+		                </el-col>
+		                <el-col :span="12">
+		                    <el-form-item label="性别" prop="cChildSex">
+		                        <el-select v-model="formCarte.cChildSex" @change="calcNutrient" placeholder="请选择" style="width: 100%;">
+		                        	<el-option label="男" value="M"></el-option>
+									<el-option label="女" value="F"></el-option>
+		                        </el-select>
+		                    </el-form-item>
+		                </el-col>
+		                <el-col :span="12">
+		                    <el-form-item label="电话" prop="cPhoneNo">
+		                        <el-input placeholder="请输入名称" v-model="formCarte.cPhoneNo"></el-input>
+		                    </el-form-item>
+		                </el-col>
+		                <el-col :span="12">
+		                    <el-form-item label="营养素标准" prop="cStd">
+								<el-select v-model="formCarte.cStd" @change="calcNutrient" placeholder="请选择" style="width: 100%;">
+									<el-option
+											v-for="item in stdOptions"
+											:key="item.value"
+											:label="item.label"
+											:value="item.value">
+									</el-option>
+								</el-select>
+		                    </el-form-item>
+		                </el-col>
+		                <el-col :span="12">
+		                    <el-form-item label="用餐时间" prop="tTm">
+		                    	<el-date-picker v-model="formCarte.tTm" value-format="yyyy-MM-dd" :picker-options="{firstDayOfWeek:1,disabledDate:isDisableDate}" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" style="width: 100%;"></el-date-picker>
+		                    </el-form-item>
+		                </el-col>
+		                <el-col :span="12">
+		                    <el-form-item label="身高（厘米）">
+		                        <el-input placeholder="请输入名称" v-model="formCarte.nHeight"></el-input>
+		                    </el-form-item>
+		                </el-col>
+		                <el-col :span="12">
+		                    <el-form-item label="体重（千克）">
+		                        <el-input placeholder="请输入名称" v-model="formCarte.nWeight"></el-input>
+		                    </el-form-item>
+		                </el-col>
+		                <!--<el-col :span="12">
+		                    <el-form-item label="腰围（厘米）">
+		                        <el-input placeholder="请输入名称" v-model="cName"></el-input>
+		                    </el-form-item>
+		                </el-col>
+		                <el-col :span="12">
+		                    <el-form-item label="臀围（厘米）">
+		                        <el-input placeholder="请输入名称" v-model="cName"></el-input>
+		                    </el-form-item>
+		                </el-col>-->
+		                <el-col :span="24">
+		                    <el-form-item label="占位行">
+		                    </el-form-item>
+		                </el-col>
+		                <el-col :span="24">
+		                    <el-form-item label="过敏史">
+		                    	<el-input placeholder="请输入名称" v-model="formCarte.cHistory"></el-input>
+		                    </el-form-item>
+		                </el-col>
+		                <el-col :span="24">
+		                    <el-form-item label="食物禁忌">
+		                    	<el-col :span="22" style="padding: 0;">
+									<el-select v-model="formCarte.cTaboo" filterable multiple clearable placeholder="请选择(可多选,可输入筛选)" style="width: 100%;">
+										<el-option
+												v-for="item in tabooOptions"
+												:key="item.value"
+												:label="item.label"
+												:value="item.value">
+										</el-option>
+									</el-select>
+								</el-col>
+								<el-col :span="2" style="text-align: center;padding: 0;" >
+									<i class="el-icon-question foodTabooHelp" @click="noticeTaboo"></i>
+								</el-col>
+		                    </el-form-item>
+		                </el-col>
+		                <el-col :span="24">
+		                    <el-form-item label="特殊忌口">
+	                    		    <el-select multiple
+										   filterable
+										   remote
+										   reserve-keyword :remote-method="remoteMethod"
+										   v-model="formCarte.cSpeTaboo" filterable multiple clearable placeholder="请输入食材关键字筛选（可多选）" style="width: 100%;">
+									<el-option
+											v-for="item in speTabooOptions"
+											:key="item.value"
+											:label="item.label"
+											:value="item.value">
+									</el-option>
+								</el-select>
+		                    </el-form-item>
+		                </el-col>
+		                <el-col :span="24">
+		                    <el-form-item label="备注">
+		                    	<el-input type="textarea" :rows="6" placeholder="请输入做法" v-model="formCarte.cMemo"></el-input>
+		                    </el-form-item>
+		                </el-col>
+		            </el-row>
+		            <!--餐单-->
+		            <el-row v-if="menuOne[1]">
+		                <el-col :span="24" class="carte">
+		                    <div class="carteLeft">
+		                    	<el-col :span="24">
+			                    	<el-tabs v-model="menuTwoName" type="card" @tab-click="menuTwoClick">
+			                    		<el-tab-pane label="第一天" name="1" v-if="1<=setNum"></el-tab-pane>
+			                    		<el-tab-pane label="第二天" name="2" v-if="2<=setNum"></el-tab-pane>
+			                    		<el-tab-pane label="第三天" name="3" v-if="3<=setNum"></el-tab-pane>
+			                    		<el-tab-pane label="第四天" name="4" v-if="4<=setNum"></el-tab-pane>
+			                    		<el-tab-pane label="第五天" name="5" v-if="5<=setNum"></el-tab-pane>
+			                    		<el-tab-pane label="第六天" name="6" v-if="6<=setNum"></el-tab-pane>
+			                    		<el-tab-pane label="第七天" name="7" v-if="7<=setNum"></el-tab-pane>
+			                    	</el-tabs>
+			                    	<el-button type="primary" icon="el-icon-plus" size="small" @click="showChoose">新增</el-button>
+		                    	</el-col>
+		                    	<!--星期一-->
+		                    	<el-row v-if="menuTwo[0]">
+		                    		<table class="tableUi">
+		                    			<thead>
+		                    				<tr>
+		                    					<th width="60">餐别</th>
+		                    					<th width="160">菜品</th>
+		                    					<th width="60">重量</th>
+		                    					<th>食材</th>
+												<th width="90"></th>
+		                    				</tr>
+		                    			</thead>
+		                    			<tbody>
+		                    				<tr  v-for="item in tableData0.data">
+												<td :rowspan="item.NUMBER" v-if="item.NUMBER">{{item.cMealMrk|filterMealMark}}</td>
+												<td>{{item.cRecipeNme}}</td>
+												<td>{{item.nWeight}}</td>
+												<td>{{item.cDesc}}</td>
+												<td>
+													<div class="operation" @click="currentData=item;editDialog=true">编辑</div>
+													<div class="operation" @click="deleteFoods(item)">删除</div>
+												</td>
+		                    				</tr>
+		                    			</tbody>
+		                    		</table>
+		                    	</el-row>
+		                    	<!--星期二-->
+		                    	<el-row v-if="menuTwo[1]">
+									<table class="tableUi">
+		                    			<thead>
+		                    				<tr>
+		                    					<th width="60">餐别</th>
+		                    					<th width="160">菜品</th>
+		                    					<th width="60">重量</th>
+		                    					<th>食材</th>
+												<th width="90"></th>
+		                    				</tr>
+		                    			</thead>
+		                    			<tbody>
+		                    				<tr  v-for="item in tableData1.data">
+												<td :rowspan="item.NUMBER" v-if="item.NUMBER">{{item.cMealMrk|filterMealMark}}</td>
+												<td>{{item.cRecipeNme}}</td>
+												<td>{{item.nWeight}}</td>
+												<td>{{item.cDesc}}</td>
+												<td>
+													<div class="operation" @click="currentData=item;editDialog=true">编辑</div>
+													<div class="operation" @click="deleteFoods(item)">删除</div>
+												</td>
+		                    				</tr>
+		                    			</tbody>
+		                    		</table>
+		                    	</el-row>
+		                    	<!--星期三-->
+		                    	<el-row v-if="menuTwo[2]">
+									<table class="tableUi">
+		                    			<thead>
+		                    				<tr>
+		                    					<th width="60">餐别</th>
+		                    					<th width="160">菜品</th>
+		                    					<th width="60">重量</th>
+		                    					<th>食材</th>
+												<th width="90"></th>
+		                    				</tr>
+		                    			</thead>
+		                    			<tbody>
+		                    				<tr  v-for="item in tableData2.data">
+												<td :rowspan="item.NUMBER" v-if="item.NUMBER">{{item.cMealMrk|filterMealMark}}</td>
+												<td>{{item.cRecipeNme}}</td>
+												<td>{{item.nWeight}}</td>
+												<td>{{item.cDesc}}</td>
+												<td>
+													<div class="operation" @click="currentData=item;editDialog=true">编辑</div>
+													<div class="operation" @click="deleteFoods(item)">删除</div>
+												</td>
+		                    				</tr>
+		                    			</tbody>
+		                    		</table>
+		                    	</el-row>
+		                    	<!--星期四-->
+		                    	<el-row v-if="menuTwo[3]">
+									<table class="tableUi">
+		                    			<thead>
+		                    				<tr>
+		                    					<th width="60">餐别</th>
+		                    					<th width="160">菜品</th>
+		                    					<th width="60">重量</th>
+		                    					<th>食材</th>
+												<th width="90"></th>
+		                    				</tr>
+		                    			</thead>
+		                    			<tbody>
+		                    				<tr  v-for="item in tableData3.data">
+												<td :rowspan="item.NUMBER" v-if="item.NUMBER">{{item.cMealMrk|filterMealMark}}</td>
+												<td>{{item.cRecipeNme}}</td>
+												<td>{{item.nWeight}}</td>
+												<td>{{item.cDesc}}</td>
+												<td>
+													<div class="operation" @click="currentData=item;editDialog=true">编辑</div>
+													<div class="operation" @click="deleteFoods(item)">删除</div>
+												</td>
+		                    				</tr>
+		                    			</tbody>
+		                    		</table>
+		                    	</el-row>
+		                    	<!--星期五-->
+		                    	<el-row v-if="menuTwo[4]">
+									<table class="tableUi">
+		                    			<thead>
+		                    				<tr>
+		                    					<th width="60">餐别</th>
+		                    					<th width="160">菜品</th>
+		                    					<th width="60">重量</th>
+		                    					<th>食材</th>
+												<th width="90"></th>
+		                    				</tr>
+		                    			</thead>
+		                    			<tbody>
+		                    				<tr  v-for="item in tableData4.data">
+												<td :rowspan="item.NUMBER" v-if="item.NUMBER">{{item.cMealMrk|filterMealMark}}</td>
+												<td>{{item.cRecipeNme}}</td>
+												<td>{{item.nWeight}}</td>
+												<td>{{item.cDesc}}</td>
+												<td>
+													<div class="operation" @click="currentData=item;editDialog=true">编辑</div>
+													<div class="operation" @click="deleteFoods(item)">删除</div>
+												</td>
+		                    				</tr>
+		                    			</tbody>
+		                    		</table>
+		                    	</el-row>
+		                    	<!--星期六-->
+		                    	<el-row v-if="menuTwo[5]">
+									<table class="tableUi">
+		                    			<thead>
+		                    				<tr>
+		                    					<th width="60">餐别</th>
+		                    					<th width="160">菜品</th>
+		                    					<th width="60">重量</th>
+		                    					<th>食材</th>
+												<th width="90"></th>
+		                    				</tr>
+		                    			</thead>
+		                    			<tbody>
+		                    				<tr  v-for="item in tableData5.data">
+												<td :rowspan="item.NUMBER" v-if="item.NUMBER">{{item.cMealMrk|filterMealMark}}</td>
+												<td>{{item.cRecipeNme}}</td>
+												<td>{{item.nWeight}}</td>
+												<td>{{item.cDesc}}</td>
+												<td>
+													<div class="operation" @click="currentData=item;editDialog=true">编辑</div>
+													<div class="operation" @click="deleteFoods(item)">删除</div>
+												</td>
+		                    				</tr>
+		                    			</tbody>
+		                    		</table>
+		                    	</el-row>
+		                    	<!--星期日-->
+		                    	<el-row v-if="menuTwo[6]">
+									<table class="tableUi">
+		                    			<thead>
+		                    				<tr>
+		                    					<th width="60">餐别</th>
+		                    					<th width="160">菜品</th>
+		                    					<th width="60">重量</th>
+		                    					<th>食材</th>
+												<th width="90"></th>
+		                    				</tr>
+		                    			</thead>
+		                    			<tbody>
+		                    				<tr  v-for="item in tableData6.data">
+												<td :rowspan="item.NUMBER" v-if="item.NUMBER">{{item.cMealMrk|filterMealMark}}</td>
+												<td>{{item.cRecipeNme}}</td>
+												<td>{{item.nWeight}}</td>
+												<td>{{item.cDesc}}</td>
+												<td>
+													<div class="operation" @click="currentData=item;editDialog=true">编辑</div>
+													<div class="operation" @click="deleteFoods(item)">删除</div>
+												</td>
+		                    				</tr>
+		                    			</tbody>
+		                    		</table>
+		                    	</el-row>
+		                    </div>
+		                    <div class="carteRight">
+		                    	<el-tabs v-model="menuThreeName" type="card" @tab-click="menuThreeClick">
+		                    		<el-tab-pane label="营养素" name="0"></el-tab-pane>
+		                    		<el-tab-pane label="能量" name="1"></el-tab-pane>
+		                    		<el-tab-pane label="宝塔" name="2"></el-tab-pane>
+		                    	</el-tabs>
+		                    	<!--营养素-->
+		                    	<el-row class="nutrientTable" v-if="menuThree[0]">
+		                    		<h4>三大营养物质（单位：g）</h4>
+		                    		<table>
+		                    			<thead>
+		                    				<tr>
+		                    					<th width="30%">项目</th>
+		                    					<th width="25%">推荐</th>
+		                    					<th width="22%">实际</th>
+		                    					<th width="23%"></th>
+		                    				</tr>
+		                    			</thead>
+		                    			<tbody>
+		                    				<tr>
+		                    					<td>蛋白质</td>
+		                    					<td>{{formatWeight(allNutrient.energy.dbz[0],allNutrient.energy.dbz[2])}}</td>
+		                    					<td>{{allNutrient.sum.protein}}</td>
+		                    					<td>
+		                    						<i :class="allNutrient.result.dbz>0 ? 'dwsicon-upArrow' : 'dwsicon-downArrow' "></i>
+		                    						<span>{{allNutrient.result.dbz}}</span>
+		                    					</td>
+		                    				</tr>
+		                    				<tr>
+		                    					<td>碳水化合物</td>
+		                    					<td>{{formatWeight(allNutrient.energy.tshhw[0],allNutrient.energy.tshhw[2])}}</td>
+		                    					<td>{{allNutrient.sum.cho}}</td>
+		                    					<td>
+                                                    <i :class="allNutrient.result.tshhw>0 ? 'dwsicon-upArrow' : 'dwsicon-downArrow' "></i>
+		                    						<span>{{allNutrient.result.tshhw}}</span>
+		                    					</td>
+		                    				</tr>
+                                            <tr>
+                                                <td>脂肪</td>
+                                                <td>{{formatWeight(allNutrient.energy.zf[0],allNutrient.energy.zf[2])}}</td>
+                                                <td>{{allNutrient.sum.fat}}</td>
+                                                <td>
+                                                    <i :class="allNutrient.result.zf>0 ? 'dwsicon-upArrow' : 'dwsicon-downArrow' "></i>
+                                                    <span>{{allNutrient.result.zf}}</span>
+                                                </td>
+                                            </tr>
+		                    			</tbody>
+		                    		</table>
+		                    		<h4 style="margin-top: 10px;">微量元素（单位：mg）</h4>
+		                    		<table>
+		                    			<thead>
+		                    				<tr>
+												<th width="30%">项目</th>
+												<th width="25%">推荐</th>
+												<th width="22%">实际</th>
+												<th width="23%"></th>
+		                    				</tr>
+		                    			</thead>
+		                    			<tbody>
+		                    				<tr>
+		                    					<td>钙</td>
+                                                <td>{{formatWeight(allNutrient.bo.ca_suggest,allNutrient.bo.ca_ul)}}</td>
+                                                <td>{{allNutrient.sum.ca}}</td>
+                                                <td>
+                                                    <i :class="allNutrient.result.ca>0 ? 'dwsicon-upArrow' : 'dwsicon-downArrow' "></i>
+                                                    <span>{{allNutrient.result.ca}}</span>
+                                                </td>
+		                    				</tr>
+		                    				<tr>
+		                    					<td>磷</td>
+                                                <td>{{formatWeight(allNutrient.bo.p_suggest,allNutrient.bo.p_ul)}}</td>
+                                                <td>{{allNutrient.sum.p}}</td>
+                                                <td>
+                                                    <i :class="allNutrient.result.p>0 ? 'dwsicon-upArrow' : 'dwsicon-downArrow' "></i>
+                                                    <span>{{allNutrient.result.p}}</span>
+                                                </td>
+		                    				</tr>
+		                    				<tr>
+		                    					<td>钾</td>
+                                                <td>{{formatWeight(allNutrient.bo.k_suggest,allNutrient.bo.k_ul)}}</td>
+                                                <td>{{allNutrient.sum.k}}</td>
+                                                <td>
+                                                    <i :class="allNutrient.result.k>0 ? 'dwsicon-upArrow' : 'dwsicon-downArrow' "></i>
+                                                    <span>{{allNutrient.result.k}}</span>
+                                                </td>
+		                    				</tr>
+		                    				<tr>
+		                    					<td>锰</td>
+                                                <td>{{formatWeight(allNutrient.bo.mn_suggest,allNutrient.bo.mn_ul)}}</td>
+                                                <td>{{allNutrient.sum.mn}}</td>
+                                                <td>
+                                                    <i :class="allNutrient.result.mn>0 ? 'dwsicon-upArrow' : 'dwsicon-downArrow' "></i>
+                                                    <span>{{allNutrient.result.mn}}</span>
+                                                </td>
+		                    				</tr>
+		                    				<tr>
+		                    					<td>铜</td>
+                                                <td>{{formatWeight(allNutrient.bo.cu_suggest,allNutrient.bo.cu_ul)}}</td>
+                                                <td>{{allNutrient.sum.cu}}</td>
+                                                <td>
+                                                    <i :class="allNutrient.result.cu>0 ? 'dwsicon-upArrow' : 'dwsicon-downArrow' "></i>
+                                                    <span>{{allNutrient.result.cu}}</span>
+                                                </td>
+		                    				</tr>
+		                    				<tr>
+		                    					<td>硒</td>
+                                                <td>{{formatWeight(allNutrient.bo.se_suggest,allNutrient.bo.se_ul)}}</td>
+                                                <td>{{allNutrient.sum.se}}</td>
+                                                <td>
+                                                    <i :class="allNutrient.result.se>0 ? 'dwsicon-upArrow' : 'dwsicon-downArrow' "></i>
+                                                    <span>{{allNutrient.result.se}}</span>
+                                                </td>
+		                    				</tr>
+		                    				<tr>
+		                    					<td>锌</td>
+                                                <td>{{formatWeight(allNutrient.bo.zn_suggest,allNutrient.bo.zn_ul)}}</td>
+                                                <td>{{allNutrient.sum.zn}}</td>
+                                                <td>
+                                                    <i :class="allNutrient.result.zn>0 ? 'dwsicon-upArrow' : 'dwsicon-downArrow' "></i>
+                                                    <span>{{allNutrient.result.zn}}</span>
+                                                </td>
+		                    				</tr>
+		                    				<tr>
+		                    					<td>铁</td>
+                                                <td>{{formatWeight(allNutrient.bo.fe_suggest,allNutrient.bo.fe_ul)}}</td>
+                                                <td>{{allNutrient.sum.fe}}</td>
+                                                <td>
+                                                    <i :class="allNutrient.result.fe>0 ? 'dwsicon-upArrow' : 'dwsicon-downArrow' "></i>
+                                                    <span>{{allNutrient.result.fe}}</span>
+                                                </td>
+		                    				</tr>
+		                    				<tr>
+		                    					<td>镁</td>
+                                                <td>{{formatWeight(allNutrient.bo.mg_suggest,allNutrient.bo.mg_ul)}}</td>
+                                                <td>{{allNutrient.sum.mg}}</td>
+                                                <td>
+                                                    <i :class="allNutrient.result.mg>0 ? 'dwsicon-upArrow' : 'dwsicon-downArrow' "></i>
+                                                    <span>{{allNutrient.result.mg}}</span>
+                                                </td>
+		                    				</tr>
+		                    				<tr>
+		                    					<td>钠</td>
+                                                <td>{{formatWeight(allNutrient.bo.na_suggest,allNutrient.bo.na_ul)}}</td>
+                                                <td>{{allNutrient.sum.na}}</td>
+                                                <td>
+                                                    <i :class="allNutrient.result.na>0 ? 'dwsicon-upArrow' : 'dwsicon-downArrow' "></i>
+                                                    <span>{{allNutrient.result.na}}</span>
+                                                </td>
+		                    				</tr>
+		                    			</tbody>
+		                    		</table>
+		                    		<!--<el-col :span="24" class="nutrient">
+		                    			<el-col tag="label" :span="6">能量</el-col>
+		                    			<el-col :span="18">
+		                    				<div class="progressBar"></div>
+		                    			</el-col>
+		                    		</el-col>
+		                    		<el-col :span="24" class="nutrient">
+		                    			<el-col tag="label" :span="6">蛋白质</el-col>
+		                    			<el-col :span="18">
+		                    				<div class="progressBar"></div>
+		                    			</el-col>
+		                    		</el-col>
+		                    		<el-col :span="24" class="nutrient">
+		                    			<el-col tag="label" :span="6">脂肪</el-col>
+		                    			<el-col :span="18">
+		                    				<div class="progressBar"></div>
+		                    			</el-col>
+		                    		</el-col>
+		                    		<el-col :span="24" class="nutrient">
+		                    			<el-col tag="label" :span="6">碳水化合物</el-col>
+		                    			<el-col :span="18">
+		                    				<div class="progressBar"></div>
+		                    			</el-col>
+		                    		</el-col>
+		                    		<el-col :span="24" class="nutrient">
+		                    			<el-col tag="label" :span="6">膳食纤维</el-col>
+		                    			<el-col :span="18">
+		                    				<div class="progressBar"></div>
+		                    			</el-col>
+		                    		</el-col>
+		                    		<el-col :span="24" class="nutrient">
+		                    			<el-col tag="label" :span="6">维生素C</el-col>
+		                    			<el-col :span="18">
+		                    				<div class="progressBar"></div>
+		                    			</el-col>
+		                    		</el-col>
+		                    		<el-col :span="24" class="nutrient">
+		                    			<el-col tag="label" :span="6">维生素E</el-col>
+		                    			<el-col :span="18">
+		                    				<div class="progressBar"></div>
+		                    			</el-col>
+		                    		</el-col>
+		                    		<el-col :span="24" class="nutrient">
+		                    			<el-col tag="label" :span="6">维生素A</el-col>
+		                    			<el-col :span="18">
+		                    				<div class="progressBar"></div>
+		                    			</el-col>
+		                    		</el-col>
+		                    		<el-col :span="24" class="nutrient">
+		                    			<el-col tag="label" :span="6">铁</el-col>
+		                    			<el-col :span="18">
+		                    				<div class="progressBar"></div>
+		                    			</el-col>
+		                    		</el-col>
+		                    		<el-col :span="24" class="nutrient">
+		                    			<el-col tag="label" :span="6">钙</el-col>
+		                    			<el-col :span="18">
+		                    				<div class="progressBar"></div>
+		                    			</el-col>
+		                    		</el-col>
+		                    		<el-col :span="24" class="nutrient">
+		                    			<el-col tag="label" :span="6">锌</el-col>
+		                    			<el-col :span="18">
+		                    				<div class="progressBar"></div>
+		                    			</el-col>
+		                    		</el-col>
+		                    		<el-col :span="24" class="colorStyle">
+		                    			<el-tag color="#f39c12" size="small">不足</el-tag>
+		                    			<el-tag color="#00a65a" size="small">正常</el-tag>
+		                    			<el-tag color="#00c0ef" size="small">偏高</el-tag>
+		                    			<el-tag color="#dd4b39" size="small">过高</el-tag>
+		                    		</el-col>-->
+		                    	</el-row>
+		                    	<!--能量-->
+		                    	<el-row v-if="menuThree[1]">
+		                    		能量
+		                    	</el-row>
+		                    	<!--宝塔-->
+		                    	<el-row v-if="menuThree[2]">
+		                    		宝塔
+		                    	</el-row>
+		                    </div>
+		                </el-col>
+		            </el-row>
+		        </el-form>
+			</div>
+			<el-dialog title="餐别" :visible.sync="mealMarkDialog" width="40%">
+				<el-radio-group v-model="mealMark" class="mealRadio">
+					<el-radio :label="1">早餐</el-radio>
+					<el-radio :label="2">早加餐</el-radio>
+					<el-radio :label="3">午餐</el-radio>
+					<el-radio :label="4">午加餐</el-radio>
+					<el-radio :label="5">晚餐</el-radio>
+					<el-radio :label="6">晚加餐</el-radio>
+				</el-radio-group>
+				<div slot="footer" class="dialog-footer">
+					<el-button type="primary" size="small" @click="mealMarkDialog = false; this.utils.openPopWin('添加菜品','./recipeList.html?select='+true+'&mealMark='+mealMark+'&week='+menuTwoName,1200,600);">确 定</el-button>
+				</div>
+			</el-dialog>
+
+			<el-dialog title="编辑" @open="iniEdit" :visible.sync="editDialog">
+				<el-form>
+					<el-form-item v-for="item in foods" :label="item.cFoodNme" width="40%">
+						<el-input v-model="item.nWeight"></el-input>
+					</el-form-item>
+				</el-form>
+				<div slot="footer" class="dialog-footer">
+					<el-button @click="editDialog = false">取 消</el-button>
+					<el-button type="primary" @click="editFoods">确 定</el-button>
+				</div>
+			</el-dialog>
+		</div>
+	</body>
+	<script src="../js/utils.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/lodash@4.13.1/lodash.min.js"></script>
+	<script>
+		var vm = new Vue({
+			el: '#app',
+			data: function() {
+				return {
+				    foods:[],// 食谱的所有食材
+				    currentData:"",//编辑的数据对象
+                    mealMark:"2",// 添加菜品时记录所要添加的类型
+				    oldStd:"",//营养素标注的原值，用于触发获取营养素标准，在watch深度监控中使用
+                    formCarte:{
+						cChildNme:'',//孩子姓名
+						cChildSex:'',//性别
+						tBirthday:'',//生日
+						cPhoneNo:'',//手机ham
+						cStd:'',//使用营养素标准
+						tTm:[],//就餐日期
+						nWeight:'',//体重
+						nHeight:'',//身高
+						cHistory:'',//过敏史
+						cTaboo:[],//食物禁忌
+						cSpeTaboo:[],//特殊禁忌
+						cMemo:'',//备注
+
+						cPkId:'',//主键
+						cUserId:'',//用户id
+						cParentId:'123',//家长id
+						cChildId:'112233',//孩子id
+						cCrtId:'',//创建人
+						cUpdId:'',//修改人
+						tCrtTm:null,//创建时间
+						tUpdTm:null//修改时间
+					},
+                    allNutrient:{"bo":{"na_suggest":"0","vc_ul":"0","fe_suggest":"0","mn_ul":"0","va_ul":"0","ve_ul":"0","mn_suggest":"0","carbohydrate":"0","mg_suggest":"0","protein":"0","na_ul":"0","k_ul":"0","p_suggest":"0","cu_suggest":"0","fe_ul":"0","energy":"0","zn_suggest":"0","vc_suggest":"0","se_ul":"0","zn_ul":"0","k_suggest":"0","se_suggest":"0","mg_ul":"0","cu_ul":"0","ve_suggest":"0","ca_suggest":"0","p_ul":"0","va_suggest":"0","ca_ul":"0"},"energy":{"tshhw":["0","0","0"],"zf":["0","0","0"],"dbz":["0","0","0"]},"sum":{"thiamin":"0","retinol":"0","se":"0","dietaryFiber":"0","protein":"0","fat":"0","cholesterol":"0","veTotal":"0","mg":"0","riboflavin":"0","ca":"0","mn":"0","energy2":"0","energy1":"0","carotene":"0","niacin":"0","cho":"0","va":"0","k":"0","water":"0","vc":"0","p":"0","cu":"0","na":"0","zn":"0","ash":"0","fe":"0"},"result":{"tshhw":"0","mn":"0","k":"0","va":"0","zf":"0","vc":"0","p":"0","se":"0","cu":"0","na":"0","zn":"0","mg":"0","dbz":"0","ca":"0","fe":"0"}},
+					nutrient:{},// 存放营养成分数据
+                    carteRules:{
+						cChildNme:[
+                            { required: true, message: '请输入孩子姓名', trigger: 'blur' }
+						],
+						cChildSex:[
+                            { required: true, message: '请输入孩子性别', trigger: 'blur' }
+                        ],
+                        tBirthday:[
+                            { required: true, message: '请输入孩子出生年月', trigger: 'blur' }
+                        ],
+                        cPhoneNo:[
+                            { required: true, message: '请输入电话号码', trigger: 'blur' }
+                        ],
+                        cStd:[
+                            { required: true, message: '请选择营养素标准', trigger: 'blur' }
+                        ],
+                        tTm:[
+                            { required: true, message: '请选择就餐日期', trigger: 'blur' }
+                        ],
+					},// 基本数据表单校验规则
+                    stdOptions:[
+                        {label:"新生儿标准",value:"0"},
+                        {label:"半岁标准",value:"0.5"},
+                        {label:"1岁标准",value:"1"},
+                        {label:"2岁标准",value:"2"},
+                        {label:"3岁标准",value:"3"},
+                        {label:"4岁标准",value:"4"},
+                        {label:"5岁标准",value:"5"},
+                        {label:"6岁标准（轻体力活动水平）",value:"6-1"},
+                        {label:"6岁标准（中体力活动水平）",value:"6-2"},
+                        {label:"6岁标准（重体力活动水平）",value:"6-3"},
+                        {label:"7岁标准（轻体力活动水平）",value:"7-1"},
+                        {label:"7岁标准（中体力活动水平）",value:"7-2"},
+                        {label:"7岁标准（重体力活动水平）",value:"7-3"},
+                        {label:"8岁标准（轻体力活动水平）",value:"8-1"},
+                        {label:"8岁标准（中体力活动水平）",value:"8-2"},
+                        {label:"8岁标准（重体力活动水平）",value:"8-3"},
+                        {label:"9岁标准（轻体力活动水平）",value:"9-1"},
+                        {label:"9岁标准（中体力活动水平）",value:"9-2"},
+                        {label:"9岁标准（重体力活动水平）",value:"9-3"},
+                        {label:"10岁标准（轻体力活动水平）",value:"10-1"},
+                        {label:"10岁标准（中体力活动水平）",value:"10-2"},
+                        {label:"10岁标准（重体力活动水平）",value:"10-3"},
+                        {label:"11岁标准（轻体力活动水平）",value:"11-1"},
+                        {label:"11岁标准（中体力活动水平）",value:"11-2"},
+                        {label:"11岁标准（重体力活动水平）",value:"11-3"},
+                        {label:"14岁标准（轻体力活动水平）",value:"14-1"},
+                        {label:"14岁标准（中体力活动水平）",value:"14-2"},
+                        {label:"14岁标准（重体力活动水平）",value:"14-3"},
+                        {label:"18岁标准（轻体力活动水平）",value:"18-1"},
+                        {label:"18岁标准（中体力活动水平）",value:"18-2"},
+                        {label:"18岁标准（重体力活动水平）",value:"18-3"}
+					],//使用营养素标准options
+                    tabooOptions:[],//食物禁忌options
+                    speTabooOptions:[],//特殊忌口
+					tableData0: {data:[]},// 星期一的餐单数据
+                    tableData1: {data:[]},// 星期二的餐单数据
+                    tableData2: {data:[]},// 星期三的餐单数据
+                    tableData3: {data:[]},// 星期四的餐单数据
+                    tableData4: {data:[]},// 星期五的餐单数据
+                    tableData5: {data:[]},// 星期六的餐单数据
+                    tableData6: {data:[]},// 星期天的餐单数据
+					setNum:0,//选择了几天用餐
+                    mealMarkDialog: false,// 是否显示餐别选择框
+                    editDialog: false,// 是否显示编辑框
+					menuOneName: "0",//当前被选中的table的name
+					menuTwoName: "1",//当前被选中的table的name
+					menuThreeName: "0",//当前被选中的table的name
+                	menuOne:[true,false],//第一级菜单切换(基本信息，餐单)
+                	menuTwo:[true,false,false,false,false,false,false],// 第二级菜单切换（周一至周五）
+                	menuThree:[true,false,false],// 第三级菜单切换（营养成分，宝塔）
+                    dataFlag:[false,false,false,false,false,false,false],// 标记当前页面的数据是否已经加载过了，如果加载加载过了就不用再去加载
+				}
+			},
+			methods: {
+			    formatWeight(val1,val2){
+			        if(parseInt(val2)==-1){
+			            return Math.abs(val1);
+					}else{
+                        return Math.abs(val1)+"-"+Math.abs(val2);
+					}
+				},
+			    // 显示隐藏日期
+                isDisableDate(time) {
+                    return time.getTime()>=(Date.now()+1000*60*60*24*8)||time.getTime()<=(Date.now()+1000*60*60*24);
+				},
+				// 保留小数点
+				formatNumber(obj){
+                    if(obj instanceof Array){
+                        for(let x=0;x<obj.length;x++){
+                            let num = parseFloat(obj[x]).toFixed(1);
+                            if(num&&num!=null&&num!=undefined&&num!=null&&!isNaN(num)){
+                            	obj[x]=num;
+							}else{
+                                obj[x]=0;
+							}
+                        }
+					}else{
+                        for(let key in obj){
+                            let num =  parseFloat(obj[key].toFixed(1));
+                            if(num&&num!=null&&num!=undefined&&num!=null&&!isNaN(num)){
+                                obj[key]=num;
+                            }else{
+                                obj[key]=0;
+                            }
+                        }
+					}
+				},
+			    // 计算营养成分是否合格
+                calcNutrient(even){
+//				    如果调用这个方法传了数据过来说明是基础信息触发的ｏｎｃｈａｎｇｅ事件，需要将dataFlag全部至为false重写点击再进行加载
+				    if(even!=undefined){
+				        // 将当前的营养成分至为空
+				        this.allNutrient={};
+						// 将所有的至为false标识未进行初始化
+						this.dataFlag.forEach((item,index)=>{this.dataFlag[index]=false});
+					}
+                    let params={
+                        "std":this.formCarte.cStd,
+						"sex":this.formCarte.cChildSex,
+						"carteId":this.formCarte.cPkId,
+						"dateId":this.menuTwoName
+					}
+					let that=this;
+                    utils.post('/carte/calc',params).then(res=>{
+                        if(res.code=='1'){
+                            //格式化小数点
+                            that.formatNumber(res.data.result);
+                            that.formatNumber(res.data.sum);
+                            that.formatNumber(res.data.bo);
+                            that.formatNumber(res.data.energy.dbz=res.data.energy.dbz.split(","));
+                            that.formatNumber(res.data.energy.tshhw=res.data.energy.tshhw.split(","));
+                            that.formatNumber(res.data.energy.zf=res.data.energy.zf.split(","));
+                            that.getCurrentData(that.menuTwoName).allNutrient=res.data;
+                            that.allNutrient=res.data;
+                            console.log(res.data);
+						}else{
+                            this.$message({
+                                message: res.msg,
+                                type: 'error',
+                                duration: 900
+                            })
+						}
+					});
+				},
+			    // 获取所需营养成分
+				getNutrient:function(std){
+                    utils.post('/nutrient/get',{
+                        id:std,
+						sex:this.formCarte.cChildSex
+                    }).then(res=>{
+                        this.nutrient=res.data;
+                        console.log(this.nutrient);
+                    })
+				},
+				// 远程搜索
+                remoteMethod:_.debounce(
+					function (query) {
+						utils.post('/food/search',{
+							key:query
+						}).then(res=>{
+							this.speTabooOptions=res.data;
+						})
+					},
+					// 这是我们为判定用户停止输入等待的毫秒数
+					500
+				),
+				// 校验禁忌食材提示
+			    noticeTaboo(){
+                    this.$notify({
+                        title: '消息',
+                        type:'warning',
+                        message: '系统将在保存时校验菜单中是否含有禁忌和特殊忌口的食材'
+                    });
+                },
+				// 查询carte数据
+				queryCarte(cPkId){
+					utils.post('/carte/query',{cPkId:cPkId}).then(res=>{
+						if(res.code=='1'){
+                            let carte = res.data.carte;
+						    this.formCarte=carte;
+                            this.formCarte.cSpeTaboo=eval(carte.cSpeTaboo);
+							this.formCarte.cTaboo=eval(carte.cTaboo);
+                            this.formCarte.tBirthday=this.formatDate(carte.tBirthday);
+                            this.formCarte['tTm']=[];// 创建数组用于保存就餐时间
+							this.formCarte.tTm.push(this.formatDate(carte.tBgnTm));
+							this.formCarte.tTm.push(this.formatDate(carte.tEndTm));
+							this.formCarte.tCrtTm=this.formatDate(carte.tCrtTm);
+							this.formCarte.tUpdTm=this.formatDate(carte.tUpdTm);
+						}else{
+                            this.$message({
+                                message: "系统繁忙请稍后",
+                                type: 'error',
+                                duration: 900
+                            })
+						}
+					},res=>{
+                        this.$message({
+                            message: "系统繁忙请稍后",
+                            type: 'error',
+                            duration: 900
+                        })
+					});
+				},
+				// 格式化时间
+				formatDate(val){
+					let date = new Date(val.time);
+					return date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate();
+				},
+				//保存基本数据
+			    save(){
+                    console.log(this.formCarte);
+                    console.log(this.speTabooOptions);
+                    this.$refs['formCarte'].validate((valid) => {
+                        console.log(this.formCarte.cPkId);
+                        if (valid) {
+                            utils.post("/carte/save",this.formCarte).then(res=>{
+                                this.formCarte.cPkId = res.data.cPkId;
+								this.formCarte.cUserId= res.data.cUserId;//用户id
+								this.formCarte.cParentId= res.data.cParentId;//家长id
+								this.formCarte.cChildId= res.data.cChildId;//孩子id
+								this.formCarte.cCrtId= res.data.cCrtId;//创建人
+								this.formCarte.cUpdId= res.data.cUpdId;//修改人
+								this.formCarte.tCrtTm= res.data.tCrtTm;//创建时间
+								this.formCarte.tUpdTm= res.data.tUpdTm;//修改时间
+								console.log(this.formCarte.cPkId,res.data.cPkId);
+                                this.$message({
+                                    message: "保存成功",
+                                    type: 'success',
+                                    duration: 900
+                                })
+							});
+                        } else {
+                            return false;
+                        }
+                    });
+				},
+				// 发送餐单给家长
+				send(){
+					alert("send");
+				},
+                // 显示选择餐别选择框
+                showChoose(){
+                    if(this.formCarte.cUserId!=null&&this.formCarte.cUserId!=""&&this.formCarte.cUserId!=undefined){
+                        this.mealMarkDialog=true;
+                    }else{
+                        this.$message({
+                            message: "请先保存基本数据",
+                            type: 'warning',
+                            duration: 900
+                        })
+                    }
+
+                },
+				// 编辑食材重量
+                editFoods(){
+                    this.editDialog = false;
+                    utils.post("/carte/modifyRecipe",{recipeId:this.currentData.cRecipeId,foods:this.foods}).then(res=>{
+                     	if(res.data){
+                            this.getCurrentData(this.menuTwoName).forEach((item,index)=>{
+                     	        if(item.cPkId==this.currentData.cPkId){
+                     	            item.cRecipeId=res.data.cPkId;
+                     	            item.nWeight=res.data.nWeight;
+                     	            item.cRecipeNme=res.data.cName;
+                     	            item.cDesc=res.data.cFoodDesc;
+								}
+							})
+						}
+					});
+                    // 重写计算营养值
+                    this.calcNutrient();
+				},
+				// 获取recipeId的对应食材
+                iniEdit(){
+                    let that=this;
+                    utils.post('/recipeFood/fetchRecipeFood',{'recipeId':this.currentData.cRecipeId}).then(res=>{
+                        if(res.data && res.data.recipeFoods.length>0){
+							that.foods=res.data.recipeFoods;
+						}else{
+							setTimeout(()=>{
+								//没有任何食材
+                                that.$message({
+                                    message: "没有任何食材",
+                                    type: 'error',
+                                    duration: 900
+                                })
+							    that.editDialog=false
+							},500);
+						}
+					});
+				},
+				// 添加菜品
+				addRecipe(data){
+                    let obj={
+                        cUserId:this.formCarte.cUserId,//使用这个餐单的用户id
+                        cCarteId:this.formCarte.cPkId,// 餐单id,就是基本信息的主键
+                        cRecipeId:data.C_PK_ID,// 菜品id
+                        cRecipeUserId:data.C_CRT_ID,//创建菜品人的id
+                        cMealMrk:data.C_MEAL_MRK,// 用餐标识上午或下午
+                        nDayNum:this.menuTwoName,// 第几天就餐
+                        cRecipeNme:data.C_NAME,// 菜品名
+                        nWeight:data.N_WEIGHT,//重量
+                        cDesc:data.C_FOOD_DESC,//菜品描述
+                    }
+                    // 检查是否有禁忌食材
+                    this.detectTaboo(obj);
+                    // 入库
+                    if(this.formCarte.cUserId!=null&&this.formCarte.cUserId!=""&&this.formCarte.cUserId!=undefined){
+                            utils.post('/carte/addRecipe',obj).then(res=>{
+                                this.getCurrentData(this.menuTwoName).push(res.data);
+                            },res=>{
+                                this.$message({
+                                    message: "系统繁忙请稍后",
+                                    type: 'error',
+                                    duration: 900
+                                })
+                            });
+                        }else{
+                            this.$message({
+                                message: "请先保存基本数据",
+                                type: 'error',
+                                duration: 900
+                            })
+                        }
+
+                    // 重写计算营养值
+                    this.calcNutrient();
+				},
+                // 查看有没有禁忌食材
+                detectTaboo(obj){
+				    let param={
+                        'recipeId':obj.cRecipeId,
+                        'taboo':this.formCarte.cTaboo,
+                        'speTaboo':this.formCarte.cSpeTaboo
+                    };
+                    utils.post("/carte/detectTaboo",param).then(res=>{
+                        if(res.code=='1'&&res.data.mrk=='1'){
+                            this.$notify({
+                                title: '提示',
+                                message: res.data.msg,
+                                type: 'warning',
+                                duration: 0
+                            });
+                        }
+                    },res=>{
+                        this.$message({
+                            message: "系统繁忙请稍后",
+                            type: 'error',
+                            duration: 900
+                        })
+                    });
+                },
+				// 删除菜品
+				deleteFoods(item){
+                    this.$confirm('将删除该菜品是否确认？')
+                        .then(_ => {
+                            utils.post('/carte/delRecipe',item).then(res=>{
+                                if(res.code=='1'){
+                                    this.$message({
+                                        message: "删除成功",
+                                        type: 'success',
+                                        duration: 900
+                                    })
+                                    // 获取当前数据
+                                    let currentData = this.getCurrentData(this.menuTwoName);
+                                    // 从当前的数据中删除掉
+                                    currentData.forEach((items,index)=>{
+                                        if(item.cPkId==items.cPkId){
+                                            currentData.splice(index,1);
+                                        }
+                                    });
+                                    // 重写计算营养值
+                                    this.calcNutrient();
+                                }
+                            });
+                        })
+                        .catch(_ => {});
+				},
+				// 获取选中的carteDada数据
+				getCurrentData(val){
+//				    数组是从0开始而tableName是从1开始所以要减一
+                    switch (parseInt(val-1)){
+                        case 0:
+                            return this.tableData0.data;
+                            break;
+                        case 1:
+                            return this.tableData1.data;
+                            break;
+                        case 2:
+                            return this.tableData2.data;
+                            break;
+                        case 3:
+                            return this.tableData3.data;
+                            break;
+                        case 4:
+                            return this.tableData4.data;
+                            break;
+                        case 5:
+                            return this.tableData5.data;
+                            break;
+                        case 6:
+                            return this.tableData6.data;
+                            break;
+                    }
+				},
+
+				// 处理数据
+				dealData(data){
+                    let arr=[];
+                    // 排序
+                    for(let x=0;x<data.length;x++){
+                        for(let y=x+1;y<data.length;y++){
+                            if(parseInt(data[x].cMealMrk)>parseInt(data[y].cMealMrk)){
+                                let tmp=data[x];
+                                data[x]=data[y];
+                                data[y]=tmp;
+                            }
+                        }
+                    }
+                    // 处理要vue循环的数据
+                    data.forEach((item,index)=>{
+                        let count=0;
+                        let flag=true;
+                        data.forEach((items,indexs)=>{
+                            if(item.cMealMrk==items.cMealMrk){
+                                count=count+1;
+                                delete item['NUMBER'];
+                            }
+                        });
+                        arr.forEach((items,indexs)=>{
+                            if(items==item.cMealMrk){
+                                flag=false;
+                            }
+                        });
+                        if(arr.length==0){
+                            item['NUMBER']=count;
+                            arr.push(item.cMealMrk);
+                        }else{
+                            if(flag){
+                                item['NUMBER']=count;
+                                arr.push(item.cMealMrk);
+                            }
+                        }
+                    });
+				},
+
+				// 点击切换显示不同的dom
+	            menuOneClick: function () {
+	                for(let x=0;x<this.menuOne.length;x++){
+	                    if(x==parseInt(this.menuOneName)){
+	                        this.menuOne[x]=true;
+	                    }else{
+	                        this.menuOne[x]=false;
+	                    }
+	                    if(x==1){// 如果是第二个就计算需要显示几个星期table页
+							let begin = new Date(this.formCarte.tTm[0]);
+                            let end = new Date(this.formCarte.tTm[1]);
+                            let time = end.getTime()-begin.getTime();
+                            let oneDay = 1000*60*60*24;
+                            this.setNum=(time/oneDay)+1;
+                            // 将被选中的那个日期的数据进行初始化
+                            this.calcNutrient();
+                            // 将对应的标识至为true
+							let index=parseInt(this.menuTwoName-1);
+							this.dataFlag[index]=true;
+						}
+	                }
+	            },
+	            menuTwoClick: function () {
+	            	for(let x=0;x<this.menuTwo.length;x++){
+                        let index = parseInt((this.menuTwoName-1));
+	                    if(x==index){
+	                        this.menuTwo[x]=true;
+                            // 如果加载过就重新加载一次
+                            if(this.dataFlag[index]==false){
+                                // 计算当前天数的营养成分数据,并且将它至为true;
+                                this.calcNutrient();
+                                this.dataFlag[index]=true;
+                            }else{
+                                this.allNutrient=this.getCurrentData(this.menuTwoName).allNutrient;
+                            }
+	                    }else{
+	                        this.menuTwo[x]=false;
+	                    }
+
+	                }
+	            },
+	            menuThreeClick: function () {
+	            	for(let x=0;x<this.menuThree.length;x++){
+	                    if(x==parseInt(this.menuThreeName)){
+	                        this.menuThree[x]=true;
+	                    }else{
+	                        this.menuThree[x]=false;
+	                    }
+	                }
+	            },
+			},
+			filters:{
+			  	filterMealMark(val){
+					switch (parseInt(val)){
+						case 1:
+						    return "早餐";
+							break;
+						case 2:
+						    return "早加餐";
+                            break;
+						case 3:
+                            return "午餐";
+						    break;
+						case 4:
+                            return "午加餐";
+						    break;
+						case 5:
+                            return "晚餐";
+						    break;
+						case 6:
+                            return "晚加餐";
+						    break;
+					}
+				}
+			},
+			watch:{
+                formCarte:{
+                    deep: true,
+                    //注意：当观察的数据为对象或数组时，curVal和oldVal是相等的，因为这两个形参指向的是同一个数据对象
+                    handler: function (val, oldVal) {
+                        console.log(this.oldStd,val.cStd);
+                        if(this.oldStd!=val.cStd){
+                            this.getNutrient(val.cStd);
+						}
+                        this.oldStd = val.cStd;
+                    }
+                },
+                tableData0:{
+                    deep: true,
+                    //注意：当观察的数据为对象或数组时，curVal和oldVal是相等的，因为这两个形参指向的是同一个数据对象
+                    handler: function (val, oldVal) {
+                        this.dealData(this.tableData0.data);
+                    }
+                },
+				tableData1:{
+                    deep: true,
+                    //注意：当观察的数据为对象或数组时，curVal和oldVal是相等的，因为这两个形参指向的是同一个数据对象
+                    handler: function (val, oldVal) {
+                        this.dealData(this.tableData1.data);
+                    }
+                },
+                tableData2:{
+                    deep: true,
+                    //注意：当观察的数据为对象或数组时，curVal和oldVal是相等的，因为这两个形参指向的是同一个数据对象
+                    handler: function (val, oldVal) {
+                        this.dealData(this.tableData2.data);
+                    }
+                },
+                tableData3:{
+                    deep: true,
+                    //注意：当观察的数据为对象或数组时，curVal和oldVal是相等的，因为这两个形参指向的是同一个数据对象
+                    handler: function (val, oldVal) {
+                        this.dealData(this.tableData3.data);
+                    }
+                },
+				tableData4:{
+                    deep: true,
+                    //注意：当观察的数据为对象或数组时，curVal和oldVal是相等的，因为这两个形参指向的是同一个数据对象
+                    handler: function (val, oldVal) {
+                        this.dealData(this.tableData4.data);
+                    }
+                },
+				tableData5:{
+                    deep: true,
+                    //注意：当观察的数据为对象或数组时，curVal和oldVal是相等的，因为这两个形参指向的是同一个数据对象
+                    handler: function (val, oldVal) {
+                        this.dealData(this.tableData5.data);
+                    }
+                },
+				tableData6:{
+                    deep: true,
+                    //注意：当观察的数据为对象或数组时，curVal和oldVal是相等的，因为这两个形参指向的是同一个数据对象
+                    handler: function (val, oldVal) {
+                        this.dealData(this.tableData6.data);
+                    }
+                }
+			},
+			mounted:function () {
+				utils.initSelect([
+				    {
+						code:"",
+						type:"taboo",
+						model:this.tabooOptions
+					},
+//                    {
+//                        code:"",
+//                        type:"foods",
+//                        model:this.speTabooOptions
+//                    }
+				]);
+                let cPkId = utils.getParams("cPkId");
+				if(cPkId!=""){
+                	this.queryCarte(cPkId);
+					// 查询所有数据用于回显
+					this.remoteMethod("")
+				}
+            }
+		})
+  </script>
+</html>

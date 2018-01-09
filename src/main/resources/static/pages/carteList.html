@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<link rel="stylesheet" href="../css/base.css" />
+		<script src="../plugin/vue/vue.js"></script>
+		<script src="../plugin/element-ui/lib/index.js"></script>
+		<link rel="stylesheet" href="../plugin/element-ui/theme-chalk/index.css">
+		
+	</head>
+	
+	<body>
+		<div id="app">
+			<div class="mainBox height100">
+		        <div class="layoutUi">
+		            <el-form :inline="true">
+						<el-form-item>
+							<el-input v-model="form.name" placeholder="请输入姓名"></el-input>
+						</el-form-item>
+						<el-form-item>
+							<el-input v-model="form.phone" placeholder="请输入电话"></el-input>
+						</el-form-item>
+						<el-form-item label="就餐日期：">
+							<el-date-picker v-model="form.dateRange" type="daterange" range-separator="到" :editable="false"
+										placeholder="请选择任务时间范围"></el-date-picker>
+						</el-form-item>
+						<el-form-item>
+							<el-button type="primary" plain @click="query">查询</el-button>
+						</el-form-item>
+					</el-form>
+					<div class="layoutUiRight">
+						<el-button type="primary" @click="addCarte">添加</el-button>
+					</div>
+		        </div>
+		        <el-table  :data="tableData.resultList" borderstyle="width: 100%" :height="tableHeight">
+		            <!--数据区域-->
+		            <el-table-column prop="C_PK_ID" v-if="false"></el-table-column>
+		            <el-table-column prop="C_USER_ID" v-if="false"></el-table-column>
+		            <el-table-column prop="C_PARENT_ID" v-if="false"></el-table-column>
+		            <el-table-column prop="C_CHILD_ID"  v-if="false"></el-table-column>
+		            <el-table-column fixed prop="C_CHILD_NME" label="姓名"></el-table-column>
+		            <el-table-column prop="C_CHILD_SEX" :formatter="formatSex" label="性别"></el-table-column>
+		            <el-table-column prop="T_BIRTHDAY" label="出生日期"></el-table-column>
+		            <el-table-column prop="C_PHONE_NO" label="电话"></el-table-column>
+		            <el-table-column prop="T_BGN_TM" label="就餐日起"></el-table-column>
+		            <!--操作区域-->
+		            <el-table-column fixed="right" label="操作" width="90">
+		                <template slot-scope="scope">
+		                    <el-button @click="detail(scope.row)" type="text" size="small">编辑</el-button>
+		                    <el-button @click="deleteRow(scope.row)" type="text" size="small">删除</el-button>
+		                </template>
+		            </el-table-column>
+		        </el-table>
+				<el-pagination :current-page="form._pageNum" :page-sizes="[10,20, 50, 100]" :page-size="form._pageSize"
+										  @current-change="handleCurrentChange"
+										  @size-change="handleSizeChange"
+										  layout="total, sizes, prev, pager, next, jumper" :total="tableData.total">
+				</el-pagination>
+		    </div>
+		</div>
+	</body>
+	<script src="../js/utils.js"></script>
+	<script>
+		new Vue({
+			el: '#app',
+			data: function() {
+				return {
+                    tableData:{total:0},
+					form: {//表单上数据
+						name:null,// 以名字来查询
+						phone:null,//以手机号来查询
+                        dateRange:[],// 以时间范围来查询
+	                    _count: true,// 是否进行统计
+	                    _pageNum: 1,// 当前页面
+	                    _pageSize: 10,// 当前页面数据条数
+	                    _total: 0//总数
+	                },
+	                tableHeight:0
+				}
+			},
+			filters:{
+			    filterSex(val){
+					if(val=="M")
+					    return "男";
+					else
+					    return "女";
+				}
+			},
+			methods:{
+			    // 添加餐单
+				addCarte(){
+                    //http://localhost:8081/pages/localhost:80818081/pages/carte.html
+				    window.open("/pages/carte.html");
+				},
+				// 删除行
+                deleteRow(val){
+                    this.$confirm('将要删除该餐单是否确定？')
+                        .then(_ => {
+                            utils.post('/carte/deleteCarte',val).then(res=>{
+                                if(res.code=='1'){
+                                    this.$message({
+                                        message: "删除成功",
+                                        type: 'success',
+                                        duration: 900
+                                    })
+                                    // 从当前的数据中删除掉
+                                    this.tableData.resultList.forEach((item,index)=>{
+                                        if(item.C_PK_ID==val.C_PK_ID){
+                                            this.tableData.resultList.splice(index,1);
+                                        }
+                                    });
+                                }
+                            });
+                        })
+                        .catch(_ => {});
+				},
+				// 查看详情，以及编辑
+                detail(val){
+					window.open("/pages/carte.html?cPkId="+val.C_PK_ID);
+				},
+				// 格式化性别
+                formatSex(row, column, cellValue){
+                    if(cellValue=="M")
+                        return "男";
+                    else
+                        return "女";
+				},
+				// 查询数据
+                query: function () {
+                    this.form._total = this.tableData.total;
+                    var that = this;
+                    utils.post("/carte/queryList", this.form).then(function (res) {
+                        if (res.code == '1') {// 如果成功请求且code为1
+                            // 将数据赋值给tablatData
+                            that.tableData = res.data;
+                            that.$message({
+                                message: res.msg,
+                                type: 'success',
+                                duration: 900
+                            })
+                        } else {
+                            that.$message({
+                                message: res.msg,
+                                type: 'error',
+                                duration: 900
+                            })
+                        }
+
+                    }, function (res) {
+                        that.$message({
+                            message: res.msg,
+                            type: 'error',
+                            duration: 900
+                        })
+                    });
+                    this.form._count = false;// 每次请求完至为false
+                },
+                // 当当前页面发生改变
+                handleCurrentChange: function (val) {
+                    this.form._pageNum = val;
+                    this.query();
+                },
+                // 当搜索的名字发生改变
+                changeCount:function(){
+                    this.form._count=true;// 将count为true，重新去统计
+                },
+                // 当显示页面条数发生改变
+                handleSizeChange: function (val) {
+                    this.form._pageSize = val;
+                    this.query();
+                },
+			},
+	        mounted: function () {
+	        	//动态设置table的高度
+	            let layoutUiHeight = document.getElementsByClassName("layoutUi")[0].clientHeight;
+	            let pagination = document.getElementsByClassName("el-pagination")[0].clientHeight;
+	            let mainHeight = document.getElementsByClassName("mainBox")[0].clientHeight
+	            this.tableHeight = mainHeight-layoutUiHeight-pagination-40;
+	            // 初始化查询
+	            this.query();
+	        }
+		})
+  </script>
+</html>

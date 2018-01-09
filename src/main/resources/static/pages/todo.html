@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" href="../css/base.css"/>
+    <style type="text/css">
+        .chatWindow{width: 450px;height: 100%;background: #f4f6f8;border-left: solid 1px #d4d4d4;box-shadow: 1px 1px 15px rgba(0,0,0,0.5);overflow: hidden;position: absolute;right: 0;bottom: 0;display: flex;display: -webkit-flex;flex-direction: column;-webkit-flex-direction: column;}
+        .chatWindow .chatHead{height: 42px;line-height: 42px;background: #eee;position: relative;}
+        .chatWindow .chatHead h4{font-size:14px;font-weight:bold;padding-left: 20px;}
+        .chatWindow .chatHead .el-icon-close{width:42px;height:42px;font-size:12px;line-height: 42px;color: #999;text-align: center;cursor: pointer;position: absolute;top: 0;right: 0;}
+        .chatWindow ul{flex: 1;-webkit-flex: 1;padding: 15px 20px;overflow-y:auto ;overflow-x: hidden;}
+        .chatWindow ul li{position: relative;margin-bottom: 20px;padding-left: 60px;}
+        .chatWindow ul li .chatUser{position: absolute;left: 3px;}
+        .chatWindow ul li .chatUser img{width: 40px;height: 40px;border-radius: 50%;-webkit-border-radius: 50%;}
+        .chatWindow ul li .chatUser .chatInfo{font-size:12px;white-space:nowrap;color: #999;position: absolute;left: 60px;top: -2px;}
+        .chatWindow ul li .chatUser .chatInfo i{padding-left: 15px;font-style: normal;}
+        .chatWindow ul li .chatTxt{min-height: 22px;background: #e2e2e2;color: #333;line-height: 22px;font-size:12px;padding: 8px 15px;margin-top: 25px;display: inline-block;position: relative;border-radius: 5px;-webkit-border-radius: 5px;}
+        .chatWindow ul li .chatTxt img{max-width:280px;vertical-align: middle;margin: 7px 0;}
+        .chatWindow ul li .chatTxt:after{content: "";width: 0;height: 0;border-style: dashed;border-color: transparent;border-width: 10px;border-top-style: solid;border-top-color: #e2e2e2;position: absolute;left: -10px;top: 10px;}
+        .chatWindow ul li .chatVoice{width: 160px;cursor: pointer;}
+        .chatWindow ul li .chatVoice .chatVoiceImg{display:inline-block;}
+        .chatWindow ul li .chatVoice .chatVoiceImg img{width: 16px;margin: 0;vertical-align: sub;}
+        .chatWindow ul li .chatVoice em{font:normal 14px "微软雅黑";color: #666;position: absolute;bottom: 0;right: -28px;}
+        .chatWindow ul li .chatReport{padding-right: 70px;cursor: pointer;}
+        .chatWindow ul li .chatReport h4{line-height: 18px;}
+        .chatWindow ul li .chatReport span{height: 30px;font-size:30px;color: #fff;line-height: 30px;padding: 5px;background:#999;position: absolute;top: 50%;right: 15px;margin-top: -20px;}
+        .chatWindow ul li .chatReport p{color: #666;}
+        .chatWindow ul li.chatMine{padding-left: 0;padding-right: 60px;text-align: right;}
+        .chatWindow ul li.chatMine .chatUser{right: 3px;left: auto;}
+        .chatWindow ul li.chatMine .chatUser .chatInfo{left:auto;right: 60px;}
+        .chatWindow ul li.chatMine .chatUser .chatInfo i{padding-left: 0;padding-right: 15px;}
+        .chatWindow ul li.chatMine .chatTxt{background: #2b7db9;color: #fff;text-align: left;}
+        .chatWindow ul li.chatMine .chatTxt:after{border-top-color: #2b7db9;left:auto;right: -10px;}
+        .chatWindow ul li.chatMine .chatVoice{text-align: right;}
+        .chatWindow ul li.chatMine .chatVoice em{left: -28px;right: auto;}
+        .chatWindow ul li.chatMine .chatReport{padding-left: 70px;padding-right: 15px;}
+        .chatWindow ul li.chatMine .chatReport p{color: #eee;}
+        .chatWindow ul li.chatMine .chatReport span{background: #78c6ff;left: 15px;right: auto;}
+        .chatWindow .chatInput{padding:10px;border-top: solid 1px #eee;background: #fff;display: flex;display: -webkit-flex;}
+        .chatWindow .chatInput .el-icon-picture{font-size:24px;color: #999;display: inline-block;cursor: pointer;display: flex;display: -webkit-flex;flex-direction: column;-webkit-flex-direction: column;justify-content: center;-webkit-justify-content: center;}
+        .chatWindow .chatInput .el-textarea{margin: 0 10px;}
+        .chatWindow .chatInput button{padding: 8px 15px;}
+    </style>
+    <script src="../plugin/vue/vue.js"></script>
+    <script src="../plugin/element-ui/lib/index.js"></script>
+    <link rel="stylesheet" href="../plugin/element-ui/theme-chalk/index.css">
+</head>
+
+<body>
+<div id="app">
+    <div class="mainBox">
+        <div class="layoutUi">
+            <el-form :inline="true">
+                <el-form-item label="查询条件：">
+                    <el-checkbox-group v-model="checkedList">
+                        <el-checkbox label="1" checked>图文咨询</el-checkbox>
+                        <el-checkbox label="2" checked>电话咨询</el-checkbox>
+                        <el-checkbox label="5" checked>服务包</el-checkbox>
+                        <el-checkbox label="6" checked>骨龄</el-checkbox>
+                    </el-checkbox-group>
+                </el-form-item>
+                <el-form-item>
+                    <el-date-picker v-model="dateRange" type="daterange" range-separator="到" :editable="false"
+                                    :picker-options="pickerOptions" placeholder="请选择任务时间范围"></el-date-picker>
+                </el-form-item>
+                <el-form-item>
+                    <el-input v-model="form.name" placeholder="请填写提交人"></el-input>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" plain @click="query">查询</el-button>
+                </el-form-item>
+            </el-form>
+        </div>
+        <el-table :data="pageDTO.resultList" highlight-current-row :max-height="tableHeight" >
+            <el-table-column prop="orderType" :formatter="filterType"   label="提交类型" width="100"></el-table-column>
+            <el-table-column prop="buyerName" label="提交人" width="100"></el-table-column>
+            <el-table-column prop="orderTm" label="提交时间" width="190"></el-table-column>
+            <el-table-column :formatter="spellDetails" show-overflow-tooltip label="描述"></el-table-column>
+            <el-table-column prop="operation" label="操作" width="80">
+                <template scope="scope">
+                    <el-button @click="handleClick(scope.row)" type="success" size="small">处理</el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+        <el-pagination :current-page="form._pageNum" :page-sizes="[10,20, 50, 100]" :page-size="form._pageSize"
+                       @current-change="handleCurrentChange"
+                       @size-change="handleSizeChange"
+                       layout="total, sizes, prev, pager, next, jumper" :total="pageDTO.total">
+        </el-pagination>
+        <!--聊天窗口-->
+        <div class="chatWindow" v-show="showChat" style="display: none">
+            <div class="chatHead">
+                <h4>图文咨询内容</h4>
+                <i class="el-icon-close" @click="showChat=!showChat"></i>
+            </div>
+            <ul id="msgList">
+                <li v-for="(item,index) in chatData.messages" :class="item.belong=='me'?'chatMine':''" >
+                    <div class="chatUser" v-if="item.type != 'illDesc'">
+                        <img v-if="item.belong=='me'" :src="chatData.selfHeadImg">
+                        <img v-if="item.belong=='other'" :src="chatData.otherHeadImg">
+                        <div  v-if="item.belong=='me'" class="chatInfo">{{item.time|datefilter}}<i>&nbsp&nbsp&nbsp&nbsp{{chatData.selfNme}}</i></div>
+                        <div  v-if="item.belong=='other'" class="chatInfo">{{chatData.otherNme}}<i>{{item.time|datefilter}}</i></div>
+                    </div>
+                    <!--文字类型-->
+                    <div class="chatTxt" v-if="item.type=='1'">{{item.content}}</div>
+                    <!--语音类型-->
+                    <div class="chatTxt chatVoice" v-if="item.type=='2'" @click="fnPlayAudio(item.content);" >
+                        <span class="chatVoiceImg">
+                            <img v-if="item.belong=='me'" :value="item.belong" :name="item.content" src="http://sysdata.qiniu.hneb.net/hneb_wx_playVoiceMe.png" />
+                            <img v-if="item.belong=='other'" :value="item.belong" :name="item.content" src="http://sysdata.qiniu.hneb.net/hneb_wx_playVoice.png" />
+                        </span>
+                        <em>{{fnGetAudioLenght(item.content)}}″</em>
+                        <audio  class="ebfont eb-chatVoice"  @ended="fnChangeImg(item.content)" :src="item.content" :id="item.content" ></audio>
+                    </div>
+                    <!--图片类型-->
+                    <div v-if="item.type=='4'" class="chatTxt">
+                        <img :src="item.content"/>
+                    </div>
+                    <!--报告类型-->
+                    <div class="chatTxt chatReport" v-if="item.type=='6'" @click="openReport(item.report.url)">
+                        <h4>{{item.report.nme}}</h4>
+                        <p>{{item.report.tm}}</p>
+                        <span class="dwsicon-url"></span>
+                    </div>
+                </li>
+            </ul>
+            <div class="chatInput" @keydown="keyEnter" onkeypress="if(event.keyCode==13) return false;" >
+                <i class="el-icon-picture" @click="openFile">
+                    <input type="file" id="imageFile" @change="chooseImage" hidden accept="image/*"/>
+                </i>
+                <el-input  type="textarea" v-model="chatData.content" :autosize="{ minRows: 1, maxRows: 3}" placeholder="请输入内容" ></el-input>
+                <el-button type="primary" @click="sendMsg('1')">发送</el-button>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+<script src="../js/utils.js"></script>
+<script src="../js/chat.js"></script>
+<script src="../js/qiniu.js"></script>
+<script>
+   new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                showChat:false,// 是否显示聊天窗口
+                tableHeight: 0,//设置table最大高度值
+                dateRange: '',// 日期区间
+                checkedList: [],//被选中的值
+                orderList:[],// 记录未读的订单的信息条数
+                sOldAudioId:"",//用来记录上一次的播放audioId
+                otherSts:"",
+                token:"",
+                domain:"",
+                pageDTO: {// 分页显示的数据
+                    total: 0,// 总条数
+                    resultList: [{
+                        orderId: "",// 订单id
+                        orderTm: "",// 订单时间
+                        orderType: "",// 订单类型
+                        buyerName: "",// 购买人
+                        orderDetails: "",// 详情描述
+                        }
+                    ]
+                },
+                form: {// 表单数据
+                    name: '',// 查找人
+                    begin: '',// 开始时间
+                    end: '',// 结束时间
+                    type: '',// 查找类型
+                    _pageNum: 1,// 当前页数
+                    _pageSize: 10,// 当前页面条数
+                    _count: true// 是否需要统计总数
+                },
+                pickerOptions: {
+                    shortcuts: [{
+                        text: '最近一周',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }, {
+                        text: '最近一个月',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }, {
+                        text: '最近三个月',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }]
+                },
+                // chatWindow
+                chatData:{
+                    orderId: '',//订单号
+                    content:'xxx',//用户输入的内容
+                    otherNme: '',//聊天窗口title中对方的姓名
+                    otherId: '',//聊天中对方的id
+                    otherHeadImg: '',//对方的头像
+                    selfId: '',//聊天中当前登录人员id
+                    selfNme: '',//聊天中当前登录人员的nme
+                    selfHeadImg: '',//当前登录人员的头像
+                    messages: []//聊天数据
+                }
+            }
+        },
+        watch: {
+            checkedList: {
+                handler: function (val, oldVal) {this.form._count=true;},
+                deep: true
+            },
+            dateRange: {
+                handler: function (val, oldVal) {this.form._count=true;},
+                deep: true
+            },
+            'form.name':{
+                handler: function (val, oldVal) {this.form._count=true;},
+                deep: true
+            }
+        },
+        filters:{
+            datefilter:function(time) {
+                var time = new Date(parseInt(time));
+                return time.getFullYear()+"-"+(time.getMonth()+1)+"-"+time.getDate()+" "+time.getHours()+":"+time.getMinutes()+":"+time.getSeconds();
+            },
+        },
+        methods: {
+            handleSizeChange:function(val){
+                this.form._pageSize=val;
+                this.query();
+            },
+            handleCurrentChange:function(val){
+                this.form._pageNum=val;
+                this.query();
+            },
+            handleClick: function (row) {
+                var that = this;
+                // 显示聊天记录
+                this.showChat=!this.showChat;
+                // 获取聊天信息
+                utils.post("/chat/getChat",{orderId:row.orderId}).then(function(res){
+                    that.chatData=res.data;
+                    setTimeout(function(){
+                        // 将滚动条移至最下
+                        var ul = document.getElementById("msgList");
+                        ul.scrollTop = ul.scrollHeight;
+                    },1);
+                });
+                var data={
+                    url:"/chat/getYtxSig"
+                }
+                // 初始化容联通讯
+                chat.initChat(data,this.onMsgReceiveMsg);
+                // 获取qiniu Token
+                qiniu.getToken_().then(function(res){
+                    console.log(res)
+                    that.domain = res.domain;
+                    that.token = res.upToken;
+                });
+
+            },
+            addParentTabs:function(row){
+                // 在父体添加一个tab页
+                // 获取父对象的容器数据
+                var editableTabs = parent.vue.editableTabs;
+                // 如果tab页中已经存在了就让他选中
+                for(var i=0;i<editableTabs.length;i++){
+                    if(editableTabs[i].name==row.orderId){
+                        // 选中当前添加的页面
+                        parent.vue.editableTabsValue = row.orderId;
+                        return;
+                    }
+                }
+                // 获取iframe高度
+                var iframeHeight = parent.document.getElementsByClassName("dwsMain")[0].offsetHeight - 41;
+                // 组装页面数据
+                var data={
+                    title: row.buyerName,
+                    name: row.orderId,
+                    content: '<iframe src="/pages/table.html?orderId=' + row.orderId + '" frameborder="0" width="100%" height="' +iframeHeight+ 'px"></iframe>'
+                }
+                // 将数据添加到父对象的容器数据中
+                editableTabs.push(data);
+                // 选中当前添加的页面
+                parent.vue.editableTabsValue = row.orderId;
+            },
+            dealParams: function () {
+                // 处理选择框
+                if(this.checkedList!=""){
+                    var type="";
+                    for(var i=0;i<this.checkedList.length;i++){
+                        if(i==this.checkedList.length-1){
+                            type=type+this.checkedList[i];
+                        }else{
+                            type=type+this.checkedList[i]+",";
+                        }
+                    }
+                    this.form.type=type;
+                }else{
+                    this.form.type="1,2,3,4,5,6,7,8,9";
+                }
+                // 处理时间
+                if(this.dateRange==""){
+                    var date = new Date();
+                    this.form.begin="1000-01-01";
+                    this.form.end=date.getFullYear()+"-"+(date.getMonth()+1)+"-"+(date.getDate()+1);
+                }else{
+                    this.form.begin=this.dateRange[0];
+                    this.form.end=this.dateRange[1];
+                }
+                // 携带总数过去
+                this.form._total=this.pageDTO.total;
+
+                console.log(this.form);
+            },
+            query: function () {
+                // 处理数据
+                this.dealParams();
+                var that = this;
+                utils.post("/todo/query", this.form).then(function (res) {
+                    that.pageDTO = res.data;
+                    console.log(that.pageDTO);
+                    that.$message({
+                        message:res.msg,
+                        type:'success',
+                        duration:1000
+                    })
+                }, function (res) {
+                    that.$message({
+                        message:res.msg,
+                        type:'error',
+                        duration:1000
+                    })
+                });
+                this.form._count=false;// 每次请求完至为false
+            },
+            filterType: function (row,col,value) {
+                if(value=="1"){
+                    return "图文咨询"
+                }else if(value=="2"){
+                    return "电话咨询"
+                }else if(value=="5"){
+                    return "服务包"
+                }else{
+                    return "骨龄"
+                }
+            },
+            spellDetails:function(row){
+                var details = row.childName+'   '+(row.childSex=='F'?'女':'男')+'     '+row.birthday+'    '+row.illName+'     '+row.illTm+'   '+row.illDesc;
+                return details;
+            },
+            // 关闭聊天窗口
+            closeChat:function(){
+                this.showChat=!this.showChat;
+            },
+            // 打开图片管理器
+            openFile:function(){
+                if (window.File && window.FileReader && window.FileList && window.Blob) {
+                    document.getElementById("imageFile").click();// 触发点击事件
+                } else {
+                    this.$message("您当前的浏览器不支持打开文件浏览器");
+                }
+            },
+            // 选中某个图片
+            chooseImage:function(event){
+                var that=this;
+                var file=event.target.files[0];
+                var fileSize = file.size;
+                var fileType = file.type;
+                var size = fileSize / 1024;
+                if(fileType!="image/png"){
+                    this.$message("请选择正确的图片格式");
+                    return
+                }else if(size>2000){
+                    this.$message("文件不能大于2M");
+                    event.target.value="";
+                    return
+                }
+                qiniu.uploadFile(file,this.token,function(events){}).then(function(res){
+                    if(res.mrk){
+                        that.chatData.content=that.domain+res.fileNme;
+                        that.sendMsg("4");
+                    }else{
+                        that.$message({
+                            message:"系统繁忙请稍后",
+                            type:'error',
+                            duration:1000
+                        })
+                    }
+                },function(){
+                    that.$message({
+                        message:"系统繁忙请稍后",
+                        type:'error',
+                        duration:1000
+                    })
+                });
+                // 清除当前的值
+                event.target.value="";
+            },
+            // 打开报告
+            openReport:function(path){
+                window.open(path);
+            },
+            // 回车键发送信息
+            keyEnter:function(event){
+                if ((event.keyCode || event.which) == 13) {
+                    this.sendMsg("1");
+                }
+            },
+            // 发送消息
+            sendMsg:function(type){
+                // 判断是否包含必须参数
+                if(this.paramsJudge()){
+                    return;
+                }
+                var that=this;
+                if(type=='1'){
+                    chat.sendTextMsg(this.chatData.otherId,this.chatData.orderId,this.chatData.content,function(){
+                        // 插入到数据库
+                        that.saveChatInfo(that.chatData.orderId,'1',that.chatData.content);
+                    },function(){
+                        that.$message({
+                            message:"系统繁忙请稍后",
+                            type:'error',
+                            duration:1000
+                        })
+                    });
+                }else if(type=='4') {
+                    chat.sendImgMsg(this.chatData.otherId,this.chatData.orderId,this.chatData.content,function(){
+                        // 插入到数据库
+                        that.saveChatInfo(that.chatData.orderId,"4",that.chatData.content);
+                    },function(){
+                        that.$message({
+                            message:"系统繁忙请稍后",
+                            type:'error',
+                            duration:1000
+                        })
+                    });
+                }
+            },
+            // 获取音频长度
+            fnGetAudioLenght:function(value){
+                var iIndex = value.lastIndexOf(".");
+                var sUrl="";
+                if(parseInt(iIndex)>"http://7xqbp2.com2.z0.glb.qiniucdn.com/".length){
+                    sUrl = value.substr(0,value.lastIndexOf("."));
+                    return sUrl.substr(value.lastIndexOf("_")+1);
+                }else{
+                    return value.substr(value.lastIndexOf("_")+1);
+                }
+            },
+            // 播放被点击的音频
+            fnPlayAudio:function(id){
+                var oImg = document.getElementsByName(id)[0];// 获取出播放时的img标签
+                var oAudio = document.getElementById(id);//获取当前被点击的语音
+                // 第一次点击为播放，第二次点击为暂停
+                if(oAudio.paused){
+                    if(oImg.getAttribute("value")=="me"){
+                        oImg.setAttribute("src","http://sysdata.qiniu.hneb.net/hneb_wx_playVoiceMe.gif");
+                    }else if(oImg.getAttribute("value")=="other"){
+                        oImg.setAttribute("src","http://sysdata.qiniu.hneb.net/hneb_wx_playVoice.gif");
+                    }
+                    // 停止上次正在播放的audio
+                    this.fnStopAudioLastTime(this.sOldAudioId);
+                    //把当前的audioId赋值为老的
+                    this.sOldAudioId=id;
+                    // 播放语音
+                    oAudio.play();
+                }else{
+                    // 停止上次正在播放的audio
+                    this.fnStopAudioLastTime(this.sOldAudioId);
+                    this.sOldAudioId=id;
+                }
+            },
+            // 当语音播放完毕，就将播放动图改为静态的,通过唯一（id）的name来标识对应的语音播放动图
+            fnChangeImg:function(name){
+                // 获取当前语音对应的img图片
+                var oImg = document.getElementsByName(name)[0];// 获取出播放时的img标签
+                if(oImg.getAttribute("value")=="me"){
+                    oImg.setAttribute("src","http://sysdata.qiniu.hneb.net/hneb_wx_playVoiceMe.png");//将图片至为播放完毕的图片
+                }else{
+                    oImg.setAttribute("src","http://sysdata.qiniu.hneb.net/hneb_wx_playVoice.png");//将图片至为播放完毕的图片
+                }
+            },
+            // 停止所有的语音
+            fnStopAudioLastTime:function(id){
+                if(id==''){
+                    return;// id不能为空
+                }
+                var oAudio = document.getElementById(id);
+                var oImg = document.getElementsByName(id)[0];
+                if(!oAudio.paused){// 只有当音频在播放时进来
+                    // 把正在播放的audio暂停
+                    oAudio.currentTime = 0;
+                    // 将audio的当前播放进度调到0
+                    oAudio.pause();// 在暂停播放
+
+                    /*将正在播放语音图片设置为播放完毕*/
+                    if(oImg.getAttribute("value")=="me"){//把所有value属性为me的img全部设置为播放完毕
+                        oImg.setAttribute("src","http://sysdata.qiniu.hneb.net/hneb_wx_playVoiceMe.png");
+                    }else if(oImg.getAttribute("value")=="other"){//把所有value属性为other的img全部设置为播放完毕
+                        oImg.setAttribute("src","http://sysdata.qiniu.hneb.net/hneb_wx_playVoice.png");
+                    }
+                }
+            },
+            // 判断发送数据是否正常
+            paramsJudge:function(){
+                var that=this;
+                var orderId = this.chatData.orderId;
+                var content = this.chatData.content;
+                var otherId = this.chatData.otherId;
+                if(orderId!=""&&content!=""&&otherId!=""){
+                    return false;
+                }else if(content.trim()==""||content==null||content=="undefined"){
+                    that.$message({
+                        message:"内容不能为空",
+                        type:'error',
+                        duration:3000
+                    })
+                    this.chatData.content="";
+                    return true;
+                }
+            },
+            // 保存聊天信息
+            saveChatInfo:function(orderId,type,msg){
+                var that=this;
+                utils.post("/chat/saveChat",{orderId:orderId,type:type,content:msg}).then(function(res){
+                    if(res.code=='1'){
+                        // 将输入添加到message中
+                        that.chatData.messages.push(res.data);
+                        setTimeout(function(){
+                            // 将滚动条移至最下
+                            var ul = document.getElementById("msgList");
+                            ul.scrollTop = ul.scrollHeight;
+                        },1);
+                    }else{
+                        that.$message({
+                            message:"系统繁忙请稍后",
+                            type:'error',
+                            duration:1000
+                        })
+                    }
+                },function(res){});
+                // 发送成功后将输入框数据清空
+                this.chatData.content="";
+            },
+            // 接收信息
+            onMsgReceiveMsg:function(obj){
+                //获取发送者为
+                var sender = obj.msgSender;
+                // 接收者
+                var receiver = obj.msgReceiver;
+                // 信息内容
+                var content = obj.msgContent;
+                //获取消息发送时间
+                var time = obj.msgDateCreated;
+                // 获取发送类型和订单号
+                var json = JSON.parse(obj.msgDomain);
+                // 发送类型
+                var msgType=json.msgType;
+                // 订单号
+                var orderId=json.orderId;
+                if(orderId==this.chatData.orderId){
+                    // 将数据添加到信息数组中
+                    this.chatData.messages.push({
+                        'type':msgType,
+                        'time':time,
+                        'belong':'other',
+                        'content':content
+                    });
+                }else{
+                    this.setUnReadMsg(this.chatData.orderId);
+                }
+            },
+            /**
+             * 设置未读消息
+             * @param orderId
+             */
+            setUnReadMsg:function(orderId){
+            // 取出未读消息
+            var unRead = localStorage.getItem("HNEB_CHAT_UNREADMSG_1");
+            var unReadMsgNum = 0;
+            if(!unRead){
+                unRead = '{}';
+            }
+            unRead = JSON.parse(unRead);
+            //将未读消息加一
+            if(unRead.hasOwnProperty(orderId)){
+                var num = unRead[orderId];
+                unRead[orderId]= parseInt(num)+1;
+                unReadMsgNum = unRead[orderId];
+            }else{
+                unRead[orderId]= 1;
+                unReadMsgNum = 1;
+            }
+            // 存入localStorage
+            localStorage.setItem("HNEB_CHAT_UNREADMSG_1",JSON.stringify(unRead));
+
+            //遍历orderList 显示未读消息数目
+            for(var i=0;i<this.orderList.length;i++){
+                var tmp = this.orderList[i].orderId;
+                if(orderId==tmp){
+                    this.orderList[i].unReadMsg = unReadMsgNum+"条未读消息"
+                }
+            }
+        }
+        },
+        mounted: function () {
+            this.query();
+            var layoutUiHeight = document.getElementsByClassName("layoutUi")[0].offsetHeight;//过滤器高度
+            var pager = 58;//分页高度
+            var spacing = 40;//mainBox间距
+            this.tableHeight = document.getElementsByClassName("mainBox")[0].offsetHeight - (layoutUiHeight + pager + spacing);
+        }
+    });
+
+</script>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>404错误</title>
+    <link rel="stylesheet" href="../../css/base.css" />
+    <style type="text/css">
+    	.errorBox{width: 600px;position: absolute;top: 50%;left: 50%;margin-top: -175.5px;margin-left: -300px;}
+    	.errorBox img{width: 100%;}
+    	.errorBox .errorTit{font-size:40px;color: #999;position: absolute;top: 25px;right: 213px;}
+    	.errorBox h4,.errorBox h5{font-size:24px;font-weight: normal;text-align: center;color: #999;padding: 30px 0 20px 0;}
+    	.errorBox h5{font-size:22px;padding: 0;}
+    	.errorBox h5 span{color: red;}
+    </style>
+</head>
+<body>
+	<div class="errorBox">
+		<img src="errorBg.png" />
+		<div class="errorTit">404</div>
+		<h4>哎呀!您访问的页面不存在或者已删除。</h4>
+		<h5>将在<span id="showtimes">5</span>秒后自动跳往首页</h5>
+	</div>
+	<script type="text/javascript">
+		var num = 5;
+		function showTime(){
+			num -= 1;
+			document.getElementById("showtimes").innerHTML = num;
+			if(num==0){
+				location.href="../index.html";
+			}
+			setTimeout("showTime()",1000);  
+		}
+		showTime();
+	</script>
+</body>
+</html>

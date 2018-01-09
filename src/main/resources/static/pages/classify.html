@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<link rel="stylesheet" href="../css/base.css" />
+		<style type="text/css">
+			.classify{height: 100%;}
+			.classify .el-tabs__content{padding: 10px 0 0 10px;}
+			.classify .el-checkbox{width:25%;line-height: 30px;margin-left: 0 !important;float: left;}
+		</style>
+		<script src="../plugin/vue/vue.js"></script>
+		<script src="../plugin/element-ui/lib/index.js"></script>
+		<link rel="stylesheet" href="../plugin/element-ui/theme-chalk/index.css">
+	</head>
+	
+	<body>
+		<div id="app">
+			<div class="classify">
+				<el-tabs :tab-position="tabPosition" style="height: 100%;">
+					<el-tab-pane label="菜品分类">
+						<el-checkbox v-model="checked">主食</el-checkbox>
+						<el-checkbox v-model="checked">热菜</el-checkbox>
+						<el-checkbox v-model="checked">凉菜</el-checkbox>
+						<el-checkbox v-model="checked">小菜</el-checkbox>
+						<el-checkbox v-model="checked">汤羹</el-checkbox>
+						<el-checkbox v-model="checked">烘焙</el-checkbox>
+						<el-checkbox v-model="checked">小吃</el-checkbox>
+						<el-checkbox v-model="checked">饮品</el-checkbox>
+						<el-checkbox v-model="checked">水果</el-checkbox>
+					</el-tab-pane>
+					<el-tab-pane label="主食分类"></el-tab-pane>
+					<el-tab-pane label="荤菜分类"></el-tab-pane>
+					<el-tab-pane label="中外菜系"></el-tab-pane>
+					<el-tab-pane label="适宜人群"></el-tab-pane>
+					<el-tab-pane label="养生保健"></el-tab-pane>
+					<el-tab-pane label="饮食方式"></el-tab-pane>
+					<el-tab-pane label="节日食俗"></el-tab-pane>
+				</el-tabs>
+			</div>
+		</div>
+	</body>
+	<script src="../js/utils.js"></script>
+	<script>
+		new Vue({
+			el: '#app',
+			data: function() {
+				return {
+					visible: false,
+					tabPosition: 'left'
+				}
+			}
+		})
+  </script>
+</html>

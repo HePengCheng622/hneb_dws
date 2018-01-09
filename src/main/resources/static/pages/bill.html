@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<link rel="stylesheet" href="../css/base.css" />
+		<script src="../plugin/vue/vue.js"></script>
+		<script src="../plugin/element-ui/lib/index.js"></script>
+		<link rel="stylesheet" href="../plugin/element-ui/theme-chalk/index.css">
+		<style type="text/css">
+			.billTit{font-size:30px;text-align: center;padding-top: 20px;display: none;}
+			.billList .billHead{line-height: 48px;color: #666;font-size:14px;font-weight: bold;background: #eaeaea;border-bottom: solid 1px #c7c7c7;}
+			.billList .billHead .el-col{padding-left: 10px;}
+			.billList li{border-bottom: solid 1px #e6ebf5;padding: 10px 0;}
+			.billList li .el-row{font-size:14px}
+			.billList li .el-row .el-col{font-size:14px;color: #5a5e66;line-height: 24px;padding-left: 10px;}
+			.billList li .el-row .billNotes{padding-top: 10px;font-size:0}
+			.billList li .el-row .billNotes div{display: inline-block;font-size:14px}
+			.billList li .el-row .billNotes .noteText{color: #F56C6C;}
+			.billList li .el-row .billNotes .noteClass{padding-right: 20px;}
+			@media print {
+				@page{margin:0.3cm 0.4cm}
+				*{color: #000;}
+				.mainBox{height: initial;}
+				.billTit{display: block;}
+				.layoutUi{display: none;}
+				.billList .billHead{border-bottom-color: #000;}
+				.billList li .el-row .el-col{color: #000;}
+				.billList li .el-row .billNotes{padding-top: 5px;}
+				.billList li .el-row .billNotes .noteClass{color: #333;}
+			}
+		</style>
+	</head>
+	
+	<body>
+		<div id="app">
+			<div class="billTit">2017-12-22中餐菜单</div>
+			<div class="mainBox height100">
+				<div class="layoutUi">
+		            <el-form :inline="true">
+						<el-form-item>
+							<el-date-picker v-model="tm" type="date" value-format="yyyy-MM-dd" placeholder="选择日期"></el-date-picker>
+						</el-form-item>
+						<el-form-item>
+							<el-select v-model="mealMrk" placeholder="请选择餐别" clearable >
+								<el-option key="1" label="早餐" value="1"></el-option>
+								<el-option key="2" label="早加餐" value="2"></el-option>
+								<el-option key="3" label="午餐" value="3"></el-option>
+								<el-option key="4" label="下午加餐" value="4"></el-option>
+								<el-option key="5" label="晚餐" value="5"></el-option>
+								<el-option key="6" label="晚加餐" value="6"></el-option>
+							</el-select>
+						</el-form-item>
+						<el-form-item>
+							<el-button type="primary" plain @click="query">查询</el-button>
+						</el-form-item>
+					</el-form>
+					<div class="layoutUiRight">
+						<el-button type="primary" @click="printPage">打印菜单</el-button>
+					</div>
+			    </div>
+				<ul class="billList">
+					<el-row class="billHead">
+						<el-col :span="3">餐别</el-col>
+						<el-col :span="4">菜品</el-col>
+						<el-col :span="2">份数</el-col>
+						<el-col :span="15">食材(单份重量)</el-col>
+					</el-row>
+					<li v-for="item in list">
+						<el-row>
+							<el-col :span="3">{{formatMealMark(item.mealMark)}}</el-col>
+							<el-col :span="4">{{item.nme}}</el-col>
+							<el-col :span="2">{{item.num}}</el-col>
+							<el-col :span="15">{{item.foodDesc}}</el-col>
+							<el-col :span="24" class="billNotes">
+								<div class="noteText">注：</div>
+								<div class="noteClass">过敏史:{{item.history==null?"无":item.history}}</div>
+								<div class="noteClass">食物禁忌:{{formatArray(item.taboo)}}</div>
+								<div class="noteClass">特殊忌口:{{formatArray(item.speTaboo)}}</div>
+							</el-col>
+						</el-row>
+					</li>
+
+				</ul>
+			</div>
+		</div>
+	</body>
+	<script src="../js/utils.js"></script>
+	<script>
+		new Vue({
+			el: '#app',
+			data: function() {
+				return {
+					tm: new Date(),
+					mealMrk:'',
+					list:[]
+				}
+			},
+            methods:{
+                printPage(){
+                    window.print();
+                },
+				query(){
+                    utils.post("/bill/query",{
+						eatTm:this.tm,
+						mealMrk:this.mealMrk
+					}).then(res=>{
+						console.log(res)
+						if(res.code=='1'){
+						    this.list=res.data;
+                            this.$message({
+                                message: "查询成功",
+                                type: 'success',
+                                duration: 1000
+                            })
+						}else{
+                            this.$message({
+                                message: "系统繁忙",
+                                type: 'error',
+                                duration: 1000
+                            })
+						}
+					});
+				},
+				// 格式餐别
+				formatMealMark(val){
+				    switch(parseInt(val)){
+						case 1: return '早餐';break;
+						case 2: return '早加餐';break;
+						case 3: return '午餐';break;
+						case 4: return '午加餐';break;
+						case 5: return '晚餐';break;
+						case 6: return '晚加餐';break;
+					}
+				},
+				// 将数据格式
+				formatArray(val){
+					val = eval(val);
+					let str = "";
+					for (let key in val){
+					    str=str+val[key]+",";
+					}
+					if(str=="")
+					    return "无";
+					return str.substring(0,str.length-1);
+				}
+            }
+		})
+  </script>
+</html>

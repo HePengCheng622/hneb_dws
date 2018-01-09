@@ -1,0 +1,42 @@
+spring:
+#    mysql数据库数据源配置
+  datasource:
+    url: jdbc:mysql://192.168.1.10:3306/hnebdb
+    username: hnebapp
+    password: 123456
+    driver-class-name: com.mysql.jdbc.Driver
+#    hibernate生成策略配置
+  jpa:
+    properties:
+      hibernate:
+        ddl-auto: none
+        dialect: org.hibernate.dialect.MySQL5Dialect
+    show-sql: true
+
+cas:
+  enabled: false #是否启用cas登录 true是，false否
+  server:
+    host:
+      url: http://192.168.1.102:9090/cas
+      login_url: ${cas.server.host.url}/login
+      logout_url: ${cas.server.host.url}/logout?service=${app.server.host.url}
+
+app:
+  server:
+    host:
+      url: http://localhost:80
+  login:
+    url: /login
+  logout:
+    url: /logout
+
+
+# 设置端口
+server:
+  port: 80
+
+#系统配置
+sys_config:
+  admin_id: 08f9c86c-60fc-43c1-b0b8-55863c5d8cc5_
+
+

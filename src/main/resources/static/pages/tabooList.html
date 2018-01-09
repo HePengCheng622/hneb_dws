@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../css/base.css"/>
+    <script src="../plugin/vue/vue.js"></script>
+    <script src="../plugin/element-ui/lib/index.js"></script>
+    <link rel="stylesheet" href="../plugin/element-ui/theme-chalk/index.css">
+</head>
+<body>
+<div id="app">
+    <div class="mainBox height100">
+        <div class="layoutUi" style="padding-bottom: 15px;">
+        	<div class="layoutUiRight">
+        		<el-button type="primary" size="small" @click="addNew()">新增</el-button>
+        	</div>
+        </div>
+        <el-table :data="tableData.resultList" borderstyle="width: 100%" :height="tableHeight">
+            <!--数据区域-->
+            <el-table-column prop="pkId" label="ID" v-if="false"></el-table-column>
+            <el-table-column fixed prop="taboo" label="禁忌名称" width="120"></el-table-column>
+            <el-table-column prop="userNme" label="添加人" width="120"></el-table-column>
+            <el-table-column prop="foods" label="食材" ></el-table-column>
+
+            <!--操作区域-->
+            <el-table-column fixed="right" label="操作" width="90">
+                <template slot-scope="scope">
+                    <el-button @click="detail(scope.row)" type="text" size="small">编辑</el-button>
+                    <el-button @click="deleteRow(scope.row)" type="text" size="small">删除</el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+        <el-pagination :current-page="form._pageNum" :page-sizes="[10,20, 50, 100]" :page-size="form._pageSize"
+                       @current-change="handleCurrentChange"
+                       @size-change="handleSizeChange"
+                       layout="total, sizes, prev, pager, next, jumper" :total="tableData.total">
+        </el-pagination>
+    </div>
+</div>
+</body>
+</html>
+<script src="../js/utils.js"></script>
+<script>
+    var vm=new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                tableData: [],
+                form: {//表单上数据
+                    _count: true,// 是否进行统计
+                    _pageNum: 1,// 当前页面
+                    _pageSize: 10,// 当前页面数据条数
+                    _total: 0//总数
+                },
+                tableHeight:0
+            }
+        },
+        methods: {
+            addNew:function(src){
+                let that = this;
+                utils.openPopWin('新增','taboo.html',526,525,function(){
+                    that.query();
+                });
+            },
+            detail:function(row){
+                if(row.owner=='0'){
+                    this.$message({
+                        type: 'error',
+                        message: '只能编辑自己添加的数据!'
+                    });
+                    return;
+                }
+                utils.openPopWin('新增','taboo.html?pkId='+row.pkId ,526,525,function(){
+                    this.query();
+                });
+            },
+            deleteRow:function(row){
+                if(row.owner=='0'){
+                    this.$message({
+                        type: 'error',
+                        message: '只能编辑自己添加的数据!'
+                    });
+                    return;
+                }
+                this.$confirm('是否删除该禁忌？', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    utils.post("/taboo/delete",{
+                        'pkId':row.pkId
+                    }).then(res=>{
+                        this.$message({
+                            type: 'success',
+                            message: '删除成功!'
+                        });
+                        this.query();
+                    })
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
+            },
+            /*获取食物*/
+            query: function () {
+                console.log("query");
+                this.form._total = this.tableData.total;
+                var that = this;
+                utils.post("/taboo/query", this.form).then(function (res) {
+                    if (res.code == '1') {// 如果成功请求且code为1
+                        // 将数据赋值给tablatData
+                        that.tableData = res.data;
+                        that.$message({
+                            message: res.msg,
+                            type: 'success',
+                            duration: 900
+                        })
+                    } else {
+                        that.$message({
+                            message: res.msg,
+                            type: 'error',
+                            duration: 900
+                        })
+                    }
+                }, function (res) {
+                    that.$message({
+                        message: res.msg,
+                        type: 'error',
+                        duration: 900
+                    })
+                });
+                this.form._count = false;// 每次请求完至为false
+            },
+            // 当显示页面条数发生改变
+            handleSizeChange: function (val) {
+                this.form._pageSize = val;
+                this.fetchFood();
+            },
+            // 当当前页面发生改变
+            handleCurrentChange: function (val) {
+                this.form._pageNum = val;
+                this.fetchFood();
+            }
+        },
+        mounted: function () {
+        	//动态设置table的高度
+            let layoutUiHeight = document.getElementsByClassName("layoutUi")[0].clientHeight;
+            let pagination = document.getElementsByClassName("el-pagination")[0].clientHeight;
+            let mainHeight = document.getElementsByClassName("mainBox")[0].clientHeight
+            this.tableHeight = mainHeight-layoutUiHeight-pagination-40;
+            this.query();// 加载数据
+        }
+
+    });
+</script>
